@@ -10,6 +10,7 @@ import {
 import { Pie } from "react-chartjs-2";
 import Login from './Login';
 import AddTask from './AddTask';
+// eslint-disable-next-line no-unused-vars
 import TaskDetails from './TaskDetails';
 import UpdateTask from './UpdateTask';
 import AdminPanel from './AdminPanel';
@@ -41,27 +42,28 @@ function App() {
     roomNo: ""
   });
 
-  useEffect(() => {
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setRole(decoded.role);
-      } catch (err) {
-        console.error("Token decode error:", err);
-        setRole("");
-      }
-      loadAllTasks();
+useEffect(() => {
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      setRole(decoded.role);
+    } catch (err) {
+      console.error("Token decode error:", err);
+      setRole("");
     }
-  }, [token]);
 
-  const loadAllTasks = () => {
-    fetch(`${API_URL}/tasks`, {
-      headers: { Authorization: token }
-    })
-      .then(res => res.json())
-      .then(data => Array.isArray(data) ? setTasks(data) : setTasks([]))
-      .catch(err => console.error("Error fetching tasks:", err));
-  };
+    const loadAllTasks = () => {
+      fetch(`${API_URL}/tasks`, {
+        headers: { Authorization: token }
+      })
+        .then(res => res.json())
+        .then(data => Array.isArray(data) ? setTasks(data) : setTasks([]))
+        .catch(err => console.error("Error fetching tasks:", err));
+    };
+
+    loadAllTasks();
+  }
+}, [token]); // ✅ only depends on token
 
   const logout = () => {
     localStorage.removeItem("token");
