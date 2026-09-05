@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+// ✅ Define API base URL from environment variable
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 function TaskDetails({ taskId, onBack, setCurrentPage }) {
   const [task, setTask] = useState(null);
   const [comments, setComments] = useState([]);
@@ -19,9 +22,10 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
   useEffect(() => {
     const fetchTask = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/tasks/${taskId}`, {
+        const res = await fetch(`${API_URL}/tasks/${taskId}`, {
           headers: { "Authorization": localStorage.getItem("token") }
         });
+        if (!res.ok) throw new Error("Failed to fetch task");
         const data = await res.json();
         setTask(data);
         setComments(data.comments || []);
@@ -37,6 +41,7 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
       }
     };
     fetchTask();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   // ✅ Keyboard navigation
@@ -69,20 +74,19 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
   // ✅ Add new comment
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
-
     try {
       let imageUrls = [];
       for (let i = 0; i < newImages.length; i++) {
         if (newImages[i] instanceof File) {
           const formData = new FormData();
           formData.append("image", newImages[i]);
-          const uploadRes = await fetch("http://localhost:5000/upload", { method: "POST", body: formData });
+          const uploadRes = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
           const uploadData = await uploadRes.json();
           imageUrls.push(uploadData.imageUrl);
         }
       }
 
-      const res = await fetch(`http://localhost:5000/tasks/${task._id}/comments`, {
+      const res = await fetch(`${API_URL}/tasks/${task._id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": localStorage.getItem("token") },
         body: JSON.stringify({ text: newComment, images: imageUrls })
@@ -112,13 +116,13 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
         if (editImages[i] instanceof File) {
           const formData = new FormData();
           formData.append("image", editImages[i]);
-          const uploadRes = await fetch("http://localhost:5000/upload", { method: "POST", body: formData });
+          const uploadRes = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
           const uploadData = await uploadRes.json();
           imageUrls[i] = uploadData.imageUrl;
         }
       }
 
-      const res = await fetch(`http://localhost:5000/tasks/${task._id}/comments/${commentId}`, {
+      const res = await fetch(`${API_URL}/tasks/${task._id}/comments/${commentId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "Authorization": localStorage.getItem("token") },
         body: JSON.stringify({ text: editText, images: imageUrls })
@@ -144,18 +148,15 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
   // ✅ Delete comment
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm("Are you sure you want to delete this comment?")) return;
-
-    const res = await fetch(`http://localhost:5000/tasks/${task._id}/comments/${commentId}`, {
+    const res = await fetch(`${API_URL}/tasks/${task._id}/comments/${commentId}`, {
       method: "DELETE",
       headers: { "Authorization": localStorage.getItem("token") }
     });
-
     if (!res.ok) {
       const errData = await res.json();
       alert("Error deleting comment: " + errData.error);
       return;
     }
-
     setComments(comments.filter(c => c._id !== commentId));
   };
 
@@ -174,7 +175,7 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
         <p><strong>Status:</strong> {task.status}</p>
       </div>
 
-      {/* ✅ Show task images */}
+          {/* ✅ Show task images */}
       {task.imageUrl && task.imageUrl.length > 0 && (
         <div className="task-images">
           <h3>Attached Images</h3>
@@ -200,7 +201,7 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
         </button>
       )}
 
-            {/* ✅ Comments Section */}
+      {/* ✅ Comments Section */}
       <div className="task-comments">
         <h3>Progress Updates</h3>
         {comments.length === 0 ? (
@@ -240,25 +241,24 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
         )}
 
         {/* ✅ Add Comment (Admins & Editors only) */}
-{(role === "Admin" || role === "Editor") && (
-  <div className="add-comment-container">
-    <h4>Add Comment</h4>
-    <textarea
-      placeholder="Write your comment..."
-      value={newComment}
-      onChange={(e) => setNewComment(e.target.value)}
-    />
-    <input
-      type="file"
-      multiple
-      onChange={(e) => setNewImages(Array.from(e.target.files))}
-    />
-    <div className="add-comment-actions">
-      <button onClick={handleAddComment}>Submit Comment</button>
-    </div>
-  </div>
-)}
-
+        {(role === "Admin" || role === "Editor") && (
+          <div className="add-comment-container">
+            <h4>Add Comment</h4>
+            <textarea
+              placeholder="Write your comment..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+            />
+            <input
+              type="file"
+              multiple
+              onChange={(e) => setNewImages(Array.from(e.target.files))}
+            />
+            <div className="add-comment-actions">
+              <button onClick={handleAddComment}>Submit Comment</button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ✅ Unified Lightbox overlay */}
