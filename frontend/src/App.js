@@ -18,6 +18,9 @@ import './App.css';
 // ✅ Register chart elements
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+// ✅ Define API base URL from environment variable
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [role, setRole] = useState("");
@@ -52,7 +55,7 @@ function App() {
   }, [token]);
 
   const loadAllTasks = () => {
-    fetch("http://localhost:5000/tasks", {
+    fetch(`${API_URL}/tasks`, {
       headers: { Authorization: token }
     })
       .then(res => res.json())
@@ -88,7 +91,7 @@ function App() {
       if (value) params.append(key, value);
     });
 
-    const res = await fetch(`http://localhost:5000/tasks/search?${params.toString()}`, {
+    const res = await fetch(`${API_URL}/tasks/search?${params.toString()}`, {
       headers: { Authorization: token }
     });
     const data = await res.json();
@@ -252,16 +255,7 @@ function App() {
             </div>
           )}
 
-          {/* ✅ TaskDetails */}
-          {currentPage === "dashboard" && selectedTaskId && (
-            <TaskDetails 
-              taskId={selectedTaskId} 
-              onBack={() => setSelectedTaskId(null)} 
-              setCurrentPage={setCurrentPage}
-            />
-          )}
-
-          {/* ✅ AddTask */}
+                   {/* ✅ AddTask */}
           {currentPage === "addTask" && (
             <AddTask 
               token={token} 
@@ -278,7 +272,6 @@ function App() {
           )}
 
           {/* ✅ UpdateTask dedicated page */}
-
           {currentPage === "updateTask" && selectedTaskId && (
             <UpdateTask 
               taskId={selectedTaskId} 
@@ -288,11 +281,11 @@ function App() {
           )}
         </>
       )}
+      
       {/* ✅ Footer */}
-<footer className="app-footer">
-  <p>© {new Date().getFullYear()} Project Log Dashboard. All rights reserved.</p>
-</footer>
-
+      <footer className="app-footer">
+        <p>© {new Date().getFullYear()} Project Log Dashboard. All rights reserved.</p>
+      </footer>
     </div>
   );
 }
