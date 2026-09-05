@@ -2,6 +2,9 @@
 
 import React, { useState } from 'react';
 
+// ✅ Define API base URL from environment variable
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 function AddTask({ token, onTaskAdded }) {
   // -----------------------------
   // Store form values
@@ -14,7 +17,7 @@ function AddTask({ token, onTaskAdded }) {
   const [floor, setFloor] = useState("");
   const [roomNo, setRoomNo] = useState("");
   const [images, setImages] = useState([]);
-  const [status, setStatus] = useState("Open"); // NEW: dropdown field
+  const [status, setStatus] = useState("Open"); // ✅ NEW: dropdown field
 
   // -----------------------------
   // Handle form submission
@@ -22,53 +25,57 @@ function AddTask({ token, onTaskAdded }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Upload all images first
-    let imageUrls = [];
-    for (let i = 0; i < images.length; i++) {
-      const formData = new FormData();
-      formData.append("image", images[i]);
+    try {
+      // Upload all images first
+      let imageUrls = [];
+      for (let i = 0; i < images.length; i++) {
+        const formData = new FormData();
+        formData.append("image", images[i]);
 
-      const uploadRes = await fetch("http://localhost:5000/upload", {
+        const uploadRes = await fetch(`${API_URL}/upload`, {
+          method: "POST",
+          body: formData
+        });
+        const uploadData = await uploadRes.json();
+        imageUrls.push(uploadData.imageUrl);
+      }
+
+      // Send task data to backend
+      const newTaskRes = await fetch(`${API_URL}/tasks`, {
         method: "POST",
-        body: formData
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+        body: JSON.stringify({
+          title: taskName,
+          description,
+          addDate,
+          responsible,
+          area,
+          floor,
+          roomNo,
+          status,        // ✅ send selected status
+          imageUrl: imageUrls
+        })
       });
-      const uploadData = await uploadRes.json();
-      imageUrls.push(uploadData.imageUrl);
+
+      const newTask = await newTaskRes.json();
+      if (onTaskAdded) onTaskAdded(newTask);
+
+      // Reset form
+      setTaskName("");
+      setDescription("");
+      setAddDate("");
+      setResponsible("");
+      setArea("");
+      setFloor("");
+      setRoomNo("");
+      setImages([]);
+      setStatus("Open");
+    } catch (err) {
+      console.error("Error adding task:", err);
     }
-
-    // Send task data to backend
-    const newTaskRes = await fetch("http://localhost:5000/tasks", {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": token
-      },
-      body: JSON.stringify({
-        title: taskName,
-        description,
-        addDate,
-        responsible,
-        area,
-        floor,
-        roomNo,
-        status,        // NEW: send selected status
-        imageUrl: imageUrls
-      })
-    });
-
-    const newTask = await newTaskRes.json();
-    if (onTaskAdded) onTaskAdded(newTask);
-
-    // Reset form
-    setTaskName("");
-    setDescription("");
-    setAddDate("");
-    setResponsible("");
-    setArea("");
-    setFloor("");
-    setRoomNo("");
-    setImages([]);
-    setStatus("Open");
   };
 
   // -----------------------------
@@ -125,7 +132,7 @@ function AddTask({ token, onTaskAdded }) {
           onChange={(e) => setRoomNo(e.target.value)} 
         /><br />
 
-        {/* NEW: Status dropdown */}
+        {/* ✅ NEW: Status dropdown */}
         <label>Status: </label>
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="Open">Open</option>
