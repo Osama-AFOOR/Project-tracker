@@ -1,6 +1,9 @@
 // File: UpdateTask.js
 import React, { useState, useEffect } from "react";
 
+// ✅ Define API base URL from environment variable
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 function UpdateTask({ taskId, token, onBack }) {
   const [task, setTask] = useState(null);
   const [formData, setFormData] = useState({});
@@ -9,16 +12,20 @@ function UpdateTask({ taskId, token, onBack }) {
 
   useEffect(() => {
     const fetchTask = async () => {
-      const res = await fetch(`http://localhost:5000/tasks/${taskId}`, {
-        headers: { Authorization: token }
-      });
-      const data = await res.json();
-      setTask(data);
-      setFormData({ ...data });
+      try {
+        const res = await fetch(`${API_URL}/tasks/${taskId}`, {
+          headers: { Authorization: token }
+        });
+        const data = await res.json();
+        setTask(data);
+        setFormData({ ...data });
 
-      // decode role from token
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      setRole(payload.role);
+        // decode role from token
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setRole(payload.role);
+      } catch (err) {
+        console.error("Error fetching task:", err);
+      }
     };
     fetchTask();
   }, [taskId, token]);
@@ -38,7 +45,7 @@ function UpdateTask({ taskId, token, onBack }) {
       for (let file of newImages) {
         const formDataUpload = new FormData();
         formDataUpload.append("image", file);
-        const uploadRes = await fetch("http://localhost:5000/upload", {
+        const uploadRes = await fetch(`${API_URL}/upload`, {
           method: "POST",
           body: formDataUpload
         });
@@ -59,22 +66,26 @@ function UpdateTask({ taskId, token, onBack }) {
       };
     }
 
-    const res = await fetch(`http://localhost:5000/admin/tasks/${task._id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: token },
-      body: JSON.stringify(payload)
-    });
+    try {
+      const res = await fetch(`${API_URL}/admin/tasks/${task._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: token },
+        body: JSON.stringify(payload)
+      });
 
-    if (!res.ok) {
-      const errData = await res.json();
-      alert("Error saving task: " + errData.error);
-      return;
+      if (!res.ok) {
+        const errData = await res.json();
+        alert("Error saving task: " + errData.error);
+        return;
+      }
+
+      const updated = await res.json();
+      setTask(updated);
+      alert("Task updated successfully");
+      onBack();
+    } catch (err) {
+      console.error("Error updating task:", err);
     }
-
-    const updated = await res.json();
-    setTask(updated);
-    alert("Task updated successfully");
-    onBack();
   };
 
   // ✅ Delete image (only Admin/Editor)
@@ -137,7 +148,7 @@ function UpdateTask({ taskId, token, onBack }) {
             <option value="Open">Open</option>
             <option value="In Progress">In Progress</option>
             <option value="Completed">Completed</option>
-            <option value="Cn Hold">On Hold</option>
+            <option value="On Hold">On Hold</option>
             <option value="Canceled">Canceled</option>
           </select>
 
