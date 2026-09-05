@@ -42,27 +42,27 @@ function App() {
   });
 
   // ✅ Load all tasks
-  const loadAllTasks = () => {
-    fetch(`${API_URL}/tasks`, {
-      headers: { Authorization: token }
-    })
-      .then(res => res.json())
-      .then(data => Array.isArray(data) ? setTasks(data) : setTasks([]))
-      .catch(err => console.error("Error fetching tasks:", err));
-  };
+const loadAllTasks = React.useCallback(() => {
+  fetch(`${API_URL}/tasks`, {
+    headers: { Authorization: token }
+  })
+    .then(res => res.json())
+    .then(data => Array.isArray(data) ? setTasks(data) : setTasks([]))
+    .catch(err => console.error("Error fetching tasks:", err));
+}, [token]); // ✅ depends on token
 
-  useEffect(() => {
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setRole(decoded.role);
-      } catch (err) {
-        console.error("Token decode error:", err);
-        setRole("");
-      }
-      loadAllTasks();
+useEffect(() => {
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      setRole(decoded.role);
+    } catch (err) {
+      console.error("Token decode error:", err);
+      setRole("");
     }
-  }, [token, loadAllTasks]); // ✅ include loadAllTasks
+    loadAllTasks();
+  }
+}, [token, loadAllTasks]); // ✅ include loadAllTasks
 
   const logout = () => {
     localStorage.removeItem("token");
