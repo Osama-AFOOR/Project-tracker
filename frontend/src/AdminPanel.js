@@ -13,14 +13,16 @@ function AdminPanel({ token }) {
   const [editTask, setEditTask] = useState(null);
   const [editComment, setEditComment] = useState(null);
 
+  const API_BASE = "https://project-tracker-production-1803.up.railway.app";
+
   // ✅ Fetch all data
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [usersRes, tasksRes, commentsRes] = await Promise.all([
-          fetch("http://localhost:5000/admin/users", { headers: { Authorization: token } }),
-          fetch("http://localhost:5000/admin/tasks", { headers: { Authorization: token } }),
-          fetch("http://localhost:5000/admin/comments", { headers: { Authorization: token } }),
+          fetch(`${API_BASE}/admin/users`, { headers: { Authorization: token } }),
+          fetch(`${API_BASE}/admin/tasks`, { headers: { Authorization: token } }),
+          fetch(`${API_BASE}/admin/comments`, { headers: { Authorization: token } }),
         ]);
 
         setUsers(await usersRes.json());
@@ -40,7 +42,7 @@ function AdminPanel({ token }) {
   // --------------------
   const addUser = async () => {
     try {
-      const res = await fetch("http://localhost:5000/signup", {
+      const res = await fetch(`${API_BASE}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUser)
@@ -54,7 +56,7 @@ function AdminPanel({ token }) {
   };
 
   const changeUserRole = async (id, newRole) => {
-    const res = await fetch(`http://localhost:5000/admin/users/${id}/role`, {
+    const res = await fetch(`${API_BASE}/admin/users/${id}/role`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: token },
       body: JSON.stringify({ role: newRole })
@@ -64,7 +66,7 @@ function AdminPanel({ token }) {
   };
 
   const deleteUser = async (id) => {
-    await fetch(`http://localhost:5000/admin/users/${id}`, {
+    await fetch(`${API_BASE}/admin/users/${id}`, {
       method: "DELETE",
       headers: { Authorization: token }
     });
@@ -75,7 +77,7 @@ function AdminPanel({ token }) {
   // Task Management
   // --------------------
   const updateTask = async () => {
-    const res = await fetch(`http://localhost:5000/admin/tasks/${editTask._id}`, {
+    const res = await fetch(`${API_BASE}/admin/tasks/${editTask._id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: token },
       body: JSON.stringify(editTask)
@@ -86,7 +88,7 @@ function AdminPanel({ token }) {
   };
 
   const deleteTask = async (id) => {
-    await fetch(`http://localhost:5000/admin/tasks/${id}`, {
+    await fetch(`${API_BASE}/admin/tasks/${id}`, {
       method: "DELETE",
       headers: { Authorization: token }
     });
@@ -97,7 +99,7 @@ function AdminPanel({ token }) {
   // Comment Management
   // --------------------
   const updateComment = async () => {
-    const res = await fetch(`http://localhost:5000/admin/comments/${editComment.taskId}/${editComment._id}`, {
+    const res = await fetch(`${API_BASE}/admin/comments/${editComment.taskId}/${editComment._id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: token },
       body: JSON.stringify(editComment)
@@ -108,7 +110,7 @@ function AdminPanel({ token }) {
   };
 
   const deleteComment = async (taskId, commentId) => {
-    await fetch(`http://localhost:5000/admin/comments/${taskId}/${commentId}`, {
+    await fetch(`${API_BASE}/admin/comments/${taskId}/${commentId}`, {
       method: "DELETE",
       headers: { Authorization: token }
     });
