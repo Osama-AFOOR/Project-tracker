@@ -13,8 +13,28 @@ const path = require("path");
 // Import database models
 const User = require("./models/User");
 const Task = require("./models/Task");
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET
+});
+
 
 const app = express();
+
+// ✅ Cloudinary upload route
+app.post("/upload", upload.single("image"), async (req, res) => {
+  try {
+    const result = await cloudinary.uploader.upload(req.file.path);
+    fs.unlinkSync(req.file.path); // clean up temp file
+    res.json({ url: result.secure_url });
+  } catch (err) {
+    res.status(500).json({ error: "Upload failed", details: err.message });
+  }
+});
+
 app.use(cors());
 app.use(express.json());
 
