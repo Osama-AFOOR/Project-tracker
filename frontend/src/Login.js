@@ -6,11 +6,14 @@ function Login({ setToken }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
+  // ✅ Use environment variable for backend URL
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:5000/login", {
+      const res = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password })
@@ -18,21 +21,20 @@ function Login({ setToken }) {
 
       if (!res.ok) {
         const errData = await res.json();
-        alert("Login failed: " + errData.error);
+        alert("Login failed: " + (errData.error || "Unknown error"));
         return;
       }
 
       const data = await res.json();
-      localStorage.setItem("token", data.token);
-      setToken(data.token);
+      localStorage.setItem("token", data.token); // save token
+      setToken(data.token); // update App state
     } catch (err) {
       console.error("Login error:", err);
-      alert("Error logging in");
+      alert("Error logging in. Please check backend connection.");
     }
   };
 
   return (
-    
     <div className="login-page">
       <div className="login-card">
         {/* Optional logo area */}
