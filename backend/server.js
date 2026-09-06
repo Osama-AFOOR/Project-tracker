@@ -19,16 +19,25 @@ const Task = require("./models/Task");
 const app = express();
 
 // ✅ Configure CORS to allow your frontend Railway domain
+// ✅ Explicit CORS setup
 const allowedOrigins = [
-  "http://localhost:3000", // local dev
-  "https://vibrant-rejoicing-production-6299.up.railway.app" // your deployed frontend
+  "http://localhost:3000", 
+  "https://vibrant-rejoicing-production-6299.up.railway.app" // your frontend domain
 ];
 
-app.use(cors({
-  origin: allowedOrigins,
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 app.use(express.json());
 
