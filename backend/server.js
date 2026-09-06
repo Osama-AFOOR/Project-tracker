@@ -37,7 +37,7 @@ app.use(cors({
   credentials: true
 }));
 
-app.options("*", cors()); // ✅ handle preflight for all routes
+app.options("/*", cors()); // ✅ valid path // ✅ handle preflight for all routes
 app.use(express.json());
 
 // ✅ Connect to MongoDB (Atlas or local)
