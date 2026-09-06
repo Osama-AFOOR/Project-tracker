@@ -17,7 +17,19 @@ const User = require("./models/User");
 const Task = require("./models/Task");
 
 const app = express();
-app.use(cors());
+
+// ✅ Configure CORS to allow your frontend Railway domain
+const allowedOrigins = [
+  "http://localhost:3000", // local dev
+  "https://vibrant-rejoicing-production-6299.up.railway.app" // your deployed frontend
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
 
 // ✅ Connect to MongoDB (Atlas or local)
@@ -102,8 +114,6 @@ app.get("/tasks", auth, async (req, res) => {
   res.json(tasks);
 });
 
-// ... (search, get single task, update task, comments remain unchanged)
-
 // --------------------
 // Image Upload (Cloudinary)
 // --------------------
@@ -115,21 +125,16 @@ const upload = multer({ storage });
 
 app.post("/upload", upload.single("image"), async (req, res) => {
   try {
-    // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "projectlog" // optional: organize uploads in a folder
+      folder: "projectlog"
     });
-
-    // Clean up local temp file
-    fs.unlinkSync(req.file.path);
-
+    fs.unlinkSync(req.file.path); // clean up temp file
     res.json({ imageUrl: result.secure_url });
   } catch (err) {
     console.error("Upload error:", err);
     res.status(500).json({ error: "Image upload failed" });
   }
 });
-
 // --------------------
 // Admin Routes
 // --------------------
