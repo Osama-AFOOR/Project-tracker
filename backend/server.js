@@ -27,7 +27,26 @@ const app = express();
  //// allowedHeaders: ["Content-Type", "Authorization"]
 ///}));
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://vibrant-rejoicing-production-6299.up.railway.app"
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200); // ✅ immediately answer preflight
+  }
+  next();
+});
+
 app.use(express.json());
+
 
 // ✅ Connect to MongoDB (Atlas or local)
 mongoose
