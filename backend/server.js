@@ -9,20 +9,28 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs"); // ✅ needed for temp file cleanup
+const cloudinary = require("cloudinary").v2;
 
 // Import database models
 const User = require("./models/User");
 const Task = require("./models/Task");
-const cloudinary = require("cloudinary").v2;
 
+// ✅ Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_API_KEY,
   api_secret: process.env.CLOUD_API_SECRET
 });
 
-
 const app = express();
+
+// ✅ Middleware
+app.use(cors());
+app.use(express.json());
+
+// ✅ Multer setup (must be defined BEFORE using in routes)
+const upload = multer({ dest: "uploads/" });
 
 // ✅ Cloudinary upload route
 app.post("/upload", upload.single("image"), async (req, res) => {
@@ -31,18 +39,17 @@ app.post("/upload", upload.single("image"), async (req, res) => {
     fs.unlinkSync(req.file.path); // clean up temp file
     res.json({ url: result.secure_url });
   } catch (err) {
+    console.error("Upload error:", err);
     res.status(500).json({ error: "Upload failed", details: err.message });
   }
 });
-
-app.use(cors());
-app.use(express.json());
 
 // ✅ Connect to MongoDB (Atlas or local)
 mongoose
   .connect(process.env.MONGO_URI || "mongodb://localhost:27017/projectlog")
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB connection error:", err));
+
 
 // --------------------
 // Authentication
@@ -243,7 +250,6 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
-const upload = multer({ storage });
 
 app.post("/upload", upload.single("image"), (req, res) => {
   res.json({ imageUrl: `http://localhost:5000/${req.file.filename}` });
