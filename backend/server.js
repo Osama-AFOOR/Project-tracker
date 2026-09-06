@@ -19,26 +19,27 @@ const Task = require("./models/Task");
 const app = express();
 
 // ✅ Configure CORS to allow your frontend Railway domain
-// ✅ Explicit CORS setup
+const cors = require("cors");
+
 const allowedOrigins = [
-  "http://localhost:3000", 
-  "https://vibrant-rejoicing-production-6299.up.railway.app" // your frontend domain
+  "http://localhost:3000",
+  "https://vibrant-rejoicing-production-6299.up.railway.app"
 ];
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  // Handle preflight requests
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
 
+app.options("*", cors()); // ✅ handle preflight for all routes
 app.use(express.json());
 
 // ✅ Connect to MongoDB (Atlas or local)
