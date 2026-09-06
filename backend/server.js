@@ -3,7 +3,7 @@
 // Import required libraries
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
+const cors = require("cors");   // ✅ only once here
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -19,8 +19,6 @@ const Task = require("./models/Task");
 const app = express();
 
 // ✅ Configure CORS to allow your frontend Railway domain
-const cors = require("cors");
-
 const allowedOrigins = [
   "http://localhost:3000",
   "https://vibrant-rejoicing-production-6299.up.railway.app"
