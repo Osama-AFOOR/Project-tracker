@@ -16,7 +16,6 @@ function UpdateTask({ taskId, token, onBack }) {
         const res = await fetch(`${API_URL}/tasks/${taskId}`, {
           headers: { Authorization: token }
         });
-        if (!res.ok) throw new Error("Failed to fetch task");
         const data = await res.json();
         setTask(data);
         setFormData({ ...data });
@@ -46,20 +45,12 @@ function UpdateTask({ taskId, token, onBack }) {
       for (let file of newImages) {
         const formDataUpload = new FormData();
         formDataUpload.append("image", file);
-        try {
-          const uploadRes = await fetch(`${API_URL}/upload`, {
-            method: "POST",
-            body: formDataUpload
-          });
-          if (!uploadRes.ok) {
-            console.error("Image upload failed");
-            continue;
-          }
-          const uploadData = await uploadRes.json();
-          imageUrls.push(uploadData.imageUrl); // ✅ Cloudinary secure_url
-        } catch (err) {
-          console.error("Upload error:", err);
-        }
+        const uploadRes = await fetch(`${API_URL}/upload`, {
+          method: "POST",
+          body: formDataUpload
+        });
+        const uploadData = await uploadRes.json();
+        imageUrls.push(uploadData.imageUrl);
       }
 
       // Admin/Editor can update full fields

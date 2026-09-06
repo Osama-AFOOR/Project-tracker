@@ -13,18 +13,17 @@ const TaskSchema = new mongoose.Schema({
   roomNo: { type: String },                         // Room number
   status: {                                         // Task status (dropdown)
     type: String,
-    enum: ["Open", "In Progress", "Completed", "On Hold", "Canceled"], // allowed values
+    enum: ["Open", "In Progress", "Completed", "On Hold" , "Canceled"], // allowed values
     default: "Open"
   },
-  // ✅ Store Cloudinary URLs here
-  imageUrl: [{ type: String }],                     // Multiple Cloudinary image URLs
+  imageUrl: [{ type: String }],                     // Multiple images
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Linked user
 
-  // ✅ Comments array with optional Cloudinary image URLs
+  // ✅ New: comments array
   comments: [
     {
       text: { type: String, required: true },       // Comment text
-      images: [{ type: String }],                   // Cloudinary image URLs
+      images: [{ type: String }],                   // Optional images
       date: { type: Date, default: Date.now }       // Auto-set date
     }
   ]

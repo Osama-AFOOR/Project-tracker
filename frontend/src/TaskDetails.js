@@ -1,4 +1,4 @@
-// File: TaskDetails.js
+ // File: TaskDetails.js
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
@@ -41,6 +41,7 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
       }
     };
     fetchTask();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   // ✅ Keyboard navigation
@@ -80,9 +81,8 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
           const formData = new FormData();
           formData.append("image", newImages[i]);
           const uploadRes = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
-          if (!uploadRes.ok) continue;
           const uploadData = await uploadRes.json();
-          imageUrls.push(uploadData.imageUrl); // ✅ Cloudinary secure_url
+          imageUrls.push(uploadData.imageUrl);
         }
       }
 
@@ -117,9 +117,8 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
           const formData = new FormData();
           formData.append("image", editImages[i]);
           const uploadRes = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
-          if (!uploadRes.ok) continue;
           const uploadData = await uploadRes.json();
-          imageUrls[i] = uploadData.imageUrl; // ✅ Cloudinary secure_url
+          imageUrls[i] = uploadData.imageUrl;
         }
       }
 
@@ -176,7 +175,7 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
         <p><strong>Status:</strong> {task.status}</p>
       </div>
 
-      {/* ✅ Show task images */}
+          {/* ✅ Show task images */}
       {task.imageUrl && task.imageUrl.length > 0 && (
         <div className="task-images">
           <h3>Attached Images</h3>
@@ -195,12 +194,14 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
 
       <button onClick={onBack} style={{ marginTop: "20px" }}>Back to Dashboard</button>
 
+      {/* ✅ Show Edit Task button only for roles that can edit */}
       {(role === "Admin" || role === "Editor" || role === "Approver") && (
         <button onClick={() => setCurrentPage("updateTask")} style={{ marginTop: "10px" }}>
           Edit Task
         </button>
       )}
-            {/* ✅ Comments Section */}
+
+      {/* ✅ Comments Section */}
       <div className="task-comments">
         <h3>Progress Updates</h3>
         {comments.length === 0 ? (
@@ -210,52 +211,25 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
             <div key={c._id} className="comment-card">
               <p><strong>Date:</strong> {new Date(c.date).toLocaleString()}</p>
               <p>{c.text}</p>
-
-              {/* ✅ Show comment images */}
               {c.images?.length > 0 && (
                 <div className="comment-images">
                   {c.images.map((img, j) => (
-                    <img
-                      key={j}
-                      src={img}
-                      alt="comment"
-                      onClick={() => openImage(c.images, j)}
-                    />
+                    <img key={j} src={img} alt="comment" onClick={() => openImage(c.images, j)} />
                   ))}
                 </div>
               )}
-
               {/* ✅ Only Admin/Editor can edit/delete comments */}
               {(role === "Admin" || role === "Editor") && (
                 <>
                   {editingCommentId === c._id ? (
                     <>
-                      <textarea
-                        value={editText}
-                        onChange={(e) => setEditText(e.target.value)}
-                      />
+                      <textarea value={editText} onChange={(e) => setEditText(e.target.value)} />
                       <button onClick={() => handleEditComment(c._id)}>Save</button>
-                      <button
-                        onClick={() => {
-                          setEditingCommentId(null);
-                          setEditText("");
-                          setEditImages([]);
-                        }}
-                      >
-                        Cancel
-                      </button>
+                      <button onClick={() => { setEditingCommentId(null); setEditText(""); setEditImages([]); }}>Cancel</button>
                     </>
                   ) : (
                     <>
-                      <button
-                        onClick={() => {
-                          setEditingCommentId(c._id);
-                          setEditText(c.text);
-                          setEditImages(c.images || []);
-                        }}
-                      >
-                        Edit
-                      </button>
+                      <button onClick={() => { setEditingCommentId(c._id); setEditText(c.text); setEditImages(c.images || []); }}>Edit</button>
                       <button onClick={() => handleDeleteComment(c._id)}>Delete</button>
                     </>
                   )}
@@ -288,46 +262,37 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
 
       {/* ✅ Unified Lightbox overlay */}
       {selectedIndex !== null && (
-        <div
-          className="lightbox"
+        <div 
+          className="lightbox" 
           onClick={closeImage}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <button
-            className="nav-button left"
-            onClick={(e) => {
-              e.stopPropagation();
-              showPrev();
-            }}
+          <button 
+            className="nav-button left" 
+            onClick={(e) => { e.stopPropagation(); showPrev(); }} 
             disabled={selectedIndex === 0}
           >
             ◀
           </button>
 
-          <img
-            src={selectedImages[selectedIndex]}
-            alt="full view"
-            className="lightbox-image"
+          <img 
+            src={selectedImages[selectedIndex]} 
+            alt="full view" 
+            className="lightbox-image" 
           />
 
-          <button
-            className="nav-button right"
-            onClick={(e) => {
-              e.stopPropagation();
-              showNext();
-            }}
+          <button 
+            className="nav-button right" 
+            onClick={(e) => { e.stopPropagation(); showNext(); }} 
             disabled={selectedIndex === selectedImages.length - 1}
           >
             ▶
           </button>
 
-          <button
-            className="close-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              closeImage();
-            }}
+          <button 
+            className="close-button" 
+            onClick={(e) => { e.stopPropagation(); closeImage(); }}
           >
             ✖
           </button>

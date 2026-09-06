@@ -17,7 +17,7 @@ function AddTask({ token, onTaskAdded }) {
   const [floor, setFloor] = useState("");
   const [roomNo, setRoomNo] = useState("");
   const [images, setImages] = useState([]);
-  const [status, setStatus] = useState("Open"); // ✅ dropdown field
+  const [status, setStatus] = useState("Open"); // ✅ NEW: dropdown field
 
   // -----------------------------
   // Handle form submission
@@ -26,7 +26,7 @@ function AddTask({ token, onTaskAdded }) {
     e.preventDefault();
 
     try {
-      // ✅ Upload all images to Cloudinary via backend
+      // Upload all images first
       let imageUrls = [];
       for (let i = 0; i < images.length; i++) {
         const formData = new FormData();
@@ -36,17 +36,11 @@ function AddTask({ token, onTaskAdded }) {
           method: "POST",
           body: formData
         });
-
-        if (!uploadRes.ok) {
-          console.error("Image upload failed");
-          continue;
-        }
-
         const uploadData = await uploadRes.json();
-        imageUrls.push(uploadData.imageUrl); // ✅ Cloudinary secure_url
+        imageUrls.push(uploadData.imageUrl);
       }
 
-      // ✅ Send task data to backend
+      // Send task data to backend
       const newTaskRes = await fetch(`${API_URL}/tasks`, {
         method: "POST",
         headers: { 
@@ -61,7 +55,7 @@ function AddTask({ token, onTaskAdded }) {
           area,
           floor,
           roomNo,
-          status,
+          status,        // ✅ send selected status
           imageUrl: imageUrls
         })
       });
@@ -69,7 +63,7 @@ function AddTask({ token, onTaskAdded }) {
       const newTask = await newTaskRes.json();
       if (onTaskAdded) onTaskAdded(newTask);
 
-      // ✅ Reset form
+      // Reset form
       setTaskName("");
       setDescription("");
       setAddDate("");
@@ -138,17 +132,15 @@ function AddTask({ token, onTaskAdded }) {
           onChange={(e) => setRoomNo(e.target.value)} 
         /><br />
 
-        {/* ✅ Status dropdown */}
+        {/* ✅ NEW: Status dropdown */}
         <label>Status: </label>
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="Open">Open</option>
           <option value="In Progress">In Progress</option>
           <option value="Completed">Completed</option>
           <option value="On Hold">On Hold</option>
-          <option value="Canceled">Canceled</option>
         </select><br />
 
-        {/* ✅ File input for images */}
         <input 
           type="file" 
           multiple 
