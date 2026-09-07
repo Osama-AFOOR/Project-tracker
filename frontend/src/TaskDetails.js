@@ -1,6 +1,6 @@
- // File: TaskDetails.js
-import React, { useState, useEffect } from 'react';
-import './App.css';
+// File: TaskDetails.js
+import React, { useState, useEffect } from "react";
+import "./App.css";
 
 // ✅ Define API base URL from environment variable
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
@@ -11,9 +11,13 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [selectedImages, setSelectedImages] = useState([]);
   const [touchStartX, setTouchStartX] = useState(null);
+
+  // Comment editing state
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editText, setEditText] = useState("");
   const [editImages, setEditImages] = useState([]);
+
+  // Role + new comment state
   const [role, setRole] = useState("");
   const [newComment, setNewComment] = useState("");
   const [newImages, setNewImages] = useState([]);
@@ -23,7 +27,7 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
     const fetchTask = async () => {
       try {
         const res = await fetch(`${API_URL}/tasks/${taskId}`, {
-          headers: { "Authorization": localStorage.getItem("token") }
+          headers: { Authorization: localStorage.getItem("token") }
         });
         if (!res.ok) throw new Error("Failed to fetch task");
         const data = await res.json();
@@ -41,10 +45,9 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
       }
     };
     fetchTask();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
-  // ✅ Keyboard navigation
+  // ✅ Keyboard navigation for lightbox
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (selectedIndex === null) return;
@@ -71,108 +74,92 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
     setTouchStartX(null);
   };
 
-// ✅ Add new comment
-const handleAddComment = async () => {
-  if (!newComment.trim()) return;
-  try {
-    let imageUrls = [];
-    for (let i = 0; i < newImages.length; i++) {
-      if (newImages[i] instanceof File) {
-        const formData = new FormData();
-        formData.append("image", newImages[i]);
-        const uploadRes = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
-        const uploadData = await uploadRes.json();
-
-        // ✅ Backend returns { url: "..." }
-        if (uploadData.url) {
-          imageUrls.push(uploadData.url);
+  // ✅ Add new comment
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+    try {
+      let imageUrls = [];
+      for (let i = 0; i < newImages.length; i++) {
+        if (newImages[i] instanceof File) {
+          const formData = new FormData();
+          formData.append("image", newImages[i]);
+          const uploadRes = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
+          const uploadData = await uploadRes.json();
+          if (uploadData.url) imageUrls.push(uploadData.url);
         }
       }
+
+      const res = await fetch(`${API_URL}/tasks/${task._id}/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: localStorage.getItem("token")
+        },
+        body: JSON.stringify({ text: newComment, images: imageUrls })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        alert("Error adding comment: " + errData.error);
+        return;
+      }
+
+      const addedComment = await res.json();
+      setComments([...comments, addedComment]);
+      setNewComment("");
+      setNewImages([]);
+    } catch (err) {
+      console.error("Add comment failed:", err);
+      alert("Failed to add comment");
     }
+  };
 
-    const res = await fetch(`${API_URL}/tasks/${task._id}/comments`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": localStorage.getItem("token")
-      },
-      body: JSON.stringify({ text: newComment, images: imageUrls })
-    });
-
-    if (!res.ok) {
-      const errData = await res.json();
-      alert("Error adding comment: " + errData.error);
-      return;
-    }
-
-    const addedComment = await res.json();
-    setComments([...comments, addedComment]);
-    setNewComment("");
-    setNewImages([]);
-  } catch (err) {
-    console.error("Add comment failed:", err);
-    alert("Failed to add comment");
-  }
-};
-
-
-// ✅ Edit comment
-const handleEditComment = async (commentId) => {
-  try {
-    let imageUrls = [...editImages];
-
-    for (let i = 0; i < editImages.length; i++) {
-      if (editImages[i] instanceof File) {
-        const formData = new FormData();
-        formData.append("image", editImages[i]);
-
-        const uploadRes = await fetch(`${API_URL}/upload`, {
-          method: "POST",
-          body: formData
-        });
-
-        const uploadData = await uploadRes.json();
-
-        // ✅ Backend returns { url: "..." }
-        if (uploadData.url) {
-          imageUrls[i] = uploadData.url;
+  // ✅ Edit comment
+  const handleEditComment = async (commentId) => {
+    try {
+      let imageUrls = [...editImages];
+      for (let i = 0; i < editImages.length; i++) {
+        if (editImages[i] instanceof File) {
+          const formData = new FormData();
+          formData.append("image", editImages[i]);
+          const uploadRes = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
+          const uploadData = await uploadRes.json();
+          if (uploadData.url) imageUrls[i] = uploadData.url;
         }
       }
+
+      const res = await fetch(`${API_URL}/tasks/${task._id}/comments/${commentId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: localStorage.getItem("token")
+        },
+        body: JSON.stringify({ text: editText, images: imageUrls })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        alert("Error editing comment: " + errData.error);
+        return;
+      }
+
+      const updatedComment = await res.json();
+      setComments(comments.map(c => (c._id === commentId ? updatedComment : c)));
+      setEditingCommentId(null);
+      setEditText("");
+      setEditImages([]);
+    } catch (err) {
+      console.error("Edit failed:", err);
+      alert("Failed to edit comment");
     }
-
-    const res = await fetch(`${API_URL}/tasks/${task._id}/comments/${commentId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": localStorage.getItem("token")
-      },
-      body: JSON.stringify({ text: editText, images: imageUrls })
-    });
-
-    if (!res.ok) {
-      const errData = await res.json();
-      alert("Error editing comment: " + errData.error);
-      return;
-    }
-
-    const updatedComment = await res.json();
-    setComments(comments.map(c => (c._id === commentId ? updatedComment : c)));
-    setEditingCommentId(null);
-    setEditText("");
-    setEditImages([]);
-  } catch (err) {
-    console.error("Edit failed:", err);
-    alert("Failed to edit comment");
-  }
-};
-
+  };
 
   // ✅ Delete comment
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm("Are you sure you want to delete this comment?")) return;
     const res = await fetch(`${API_URL}/tasks/${task._id}/comments/${commentId}`, {
       method: "DELETE",
-      headers: { "Authorization": localStorage.getItem("token") }
+      headers: { Authorization: localStorage.getItem("token") }
     });
     if (!res.ok) {
       const errData = await res.json();
@@ -197,7 +184,7 @@ const handleEditComment = async (commentId) => {
         <p><strong>Status:</strong> {task.status}</p>
       </div>
 
-          {/* ✅ Show task images */}
+      {/* ✅ Show task images */}
       {task.imageUrl && task.imageUrl.length > 0 && (
         <div className="task-images">
           <h3>Attached Images</h3>
@@ -233,25 +220,56 @@ const handleEditComment = async (commentId) => {
             <div key={c._id} className="comment-card">
               <p><strong>Date:</strong> {new Date(c.date).toLocaleString()}</p>
               <p>{c.text}</p>
+
               {c.images?.length > 0 && (
                 <div className="comment-images">
                   {c.images.map((img, j) => (
-                    <img key={j} src={img} alt="comment" onClick={() => openImage(c.images, j)} />
+                    <img
+                      key={j}
+                      src={img}
+                      alt="comment"
+                      onClick={() => openImage(c.images, j)}
+                    />
                   ))}
                 </div>
               )}
+
               {/* ✅ Only Admin/Editor can edit/delete comments */}
               {(role === "Admin" || role === "Editor") && (
                 <>
                   {editingCommentId === c._id ? (
                     <>
-                      <textarea value={editText} onChange={(e) => setEditText(e.target.value)} />
+                      <textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                      />
+                      <input
+                        type="file"
+                        multiple
+                        onChange={(e) => setEditImages(Array.from(e.target.files))}
+                      />
                       <button onClick={() => handleEditComment(c._id)}>Save</button>
-                      <button onClick={() => { setEditingCommentId(null); setEditText(""); setEditImages([]); }}>Cancel</button>
+                      <button
+                        onClick={() => {
+                          setEditingCommentId(null);
+                          setEditText("");
+                          setEditImages([]);
+                        }}
+                      >
+                        Cancel
+                      </button>
                     </>
                   ) : (
                     <>
-                      <button onClick={() => { setEditingCommentId(c._id); setEditText(c.text); setEditImages(c.images || []); }}>Edit</button>
+                      <button
+                        onClick={() => {
+                          setEditingCommentId(c._id);
+                          setEditText(c.text);
+                          setEditImages(c.images || []);
+                        }}
+                      >
+                        Edit
+                      </button>
                       <button onClick={() => handleDeleteComment(c._id)}>Delete</button>
                     </>
                   )}
@@ -284,37 +302,46 @@ const handleEditComment = async (commentId) => {
 
       {/* ✅ Unified Lightbox overlay */}
       {selectedIndex !== null && (
-        <div 
-          className="lightbox" 
+        <div
+          className="lightbox"
           onClick={closeImage}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <button 
-            className="nav-button left" 
-            onClick={(e) => { e.stopPropagation(); showPrev(); }} 
+          <button
+            className="nav-button left"
+            onClick={(e) => {
+              e.stopPropagation();
+              showPrev();
+            }}
             disabled={selectedIndex === 0}
           >
             ◀
           </button>
 
-          <img 
-            src={selectedImages[selectedIndex]} 
-            alt="full view" 
-            className="lightbox-image" 
+          <img
+            src={selectedImages[selectedIndex]}
+            alt="full view"
+            className="lightbox-image"
           />
 
-          <button 
-            className="nav-button right" 
-            onClick={(e) => { e.stopPropagation(); showNext(); }} 
+          <button
+            className="nav-button right"
+            onClick={(e) => {
+              e.stopPropagation();
+              showNext();
+            }}
             disabled={selectedIndex === selectedImages.length - 1}
           >
             ▶
           </button>
 
-          <button 
-            className="close-button" 
-            onClick={(e) => { e.stopPropagation(); closeImage(); }}
+          <button
+            className="close-button"
+            onClick={(e) => {
+              e.stopPropagation();
+              closeImage();
+            }}
           >
             ✖
           </button>
@@ -325,3 +352,4 @@ const handleEditComment = async (commentId) => {
 }
 
 export default TaskDetails;
+
