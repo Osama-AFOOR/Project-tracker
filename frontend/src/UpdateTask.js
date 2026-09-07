@@ -50,7 +50,11 @@ function UpdateTask({ taskId, token, onBack }) {
           body: formDataUpload
         });
         const uploadData = await uploadRes.json();
-        imageUrls.push(uploadData.imageUrl);
+
+        // ✅ Backend returns { url: "..." }
+        if (uploadData.url) {
+          imageUrls.push(uploadData.url);
+        }
       }
 
       // Admin/Editor can update full fields
@@ -156,7 +160,7 @@ function UpdateTask({ taskId, token, onBack }) {
           <div className="task-images">
             {formData.imageUrl?.map((img, i) => (
               <div key={i} style={{ display: "inline-block", position: "relative" }}>
-                <img src={img} alt="task" />
+                <img src={img} alt="task" style={{ maxWidth: "150px" }} />
                 <button onClick={() => deleteImage(i)}>✖</button>
               </div>
             ))}
