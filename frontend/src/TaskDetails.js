@@ -71,79 +71,101 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
     setTouchStartX(null);
   };
 
-  // ✅ Add new comment
-  const handleAddComment = async () => {
-    if (!newComment.trim()) return;
-    try {
-      let imageUrls = [];
-      for (let i = 0; i < newImages.length; i++) {
-        if (newImages[i] instanceof File) {
-          const formData = new FormData();
-          formData.append("image", newImages[i]);
-          const uploadRes = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
-          const uploadData = await uploadRes.json();
-          imageUrls.push(uploadData.imageUrl);
+// ✅ Add new comment
+const handleAddComment = async () => {
+  if (!newComment.trim()) return;
+  try {
+    let imageUrls = [];
+    for (let i = 0; i < newImages.length; i++) {
+      if (newImages[i] instanceof File) {
+        const formData = new FormData();
+        formData.append("image", newImages[i]);
+        const uploadRes = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
+        const uploadData = await uploadRes.json();
+
+        // ✅ Backend returns { url: "..." }
+        if (uploadData.url) {
+          imageUrls.push(uploadData.url);
         }
       }
-
-      const res = await fetch(`${API_URL}/tasks/${task._id}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": localStorage.getItem("token") },
-        body: JSON.stringify({ text: newComment, images: imageUrls })
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        alert("Error adding comment: " + errData.error);
-        return;
-      }
-
-      const addedComment = await res.json();
-      setComments([...comments, addedComment]);
-      setNewComment("");
-      setNewImages([]);
-    } catch (err) {
-      console.error("Add comment failed:", err);
-      alert("Failed to add comment");
     }
-  };
 
-  // ✅ Edit comment
-  const handleEditComment = async (commentId) => {
-    try {
-      let imageUrls = [...editImages];
-      for (let i = 0; i < editImages.length; i++) {
-        if (editImages[i] instanceof File) {
-          const formData = new FormData();
-          formData.append("image", editImages[i]);
-          const uploadRes = await fetch(`${API_URL}/upload`, { method: "POST", body: formData });
-          const uploadData = await uploadRes.json();
-          imageUrls[i] = uploadData.imageUrl;
+    const res = await fetch(`${API_URL}/tasks/${task._id}/comments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": localStorage.getItem("token")
+      },
+      body: JSON.stringify({ text: newComment, images: imageUrls })
+    });
+
+    if (!res.ok) {
+      const errData = await res.json();
+      alert("Error adding comment: " + errData.error);
+      return;
+    }
+
+    const addedComment = await res.json();
+    setComments([...comments, addedComment]);
+    setNewComment("");
+    setNewImages([]);
+  } catch (err) {
+    console.error("Add comment failed:", err);
+    alert("Failed to add comment");
+  }
+};
+
+
+// ✅ Edit comment
+const handleEditComment = async (commentId) => {
+  try {
+    let imageUrls = [...editImages];
+
+    for (let i = 0; i < editImages.length; i++) {
+      if (editImages[i] instanceof File) {
+        const formData = new FormData();
+        formData.append("image", editImages[i]);
+
+        const uploadRes = await fetch(`${API_URL}/upload`, {
+          method: "POST",
+          body: formData
+        });
+
+        const uploadData = await uploadRes.json();
+
+        // ✅ Backend returns { url: "..." }
+        if (uploadData.url) {
+          imageUrls[i] = uploadData.url;
         }
       }
-
-      const res = await fetch(`${API_URL}/tasks/${task._id}/comments/${commentId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", "Authorization": localStorage.getItem("token") },
-        body: JSON.stringify({ text: editText, images: imageUrls })
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        alert("Error editing comment: " + errData.error);
-        return;
-      }
-
-      const updatedComment = await res.json();
-      setComments(comments.map(c => c._id === commentId ? updatedComment : c));
-      setEditingCommentId(null);
-      setEditText("");
-      setEditImages([]);
-    } catch (err) {
-      console.error("Edit failed:", err);
-      alert("Failed to edit comment");
     }
-  };
+
+    const res = await fetch(`${API_URL}/tasks/${task._id}/comments/${commentId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": localStorage.getItem("token")
+      },
+      body: JSON.stringify({ text: editText, images: imageUrls })
+    });
+
+    if (!res.ok) {
+      const errData = await res.json();
+      alert("Error editing comment: " + errData.error);
+      return;
+    }
+
+    const updatedComment = await res.json();
+    setComments(comments.map(c => (c._id === commentId ? updatedComment : c)));
+    setEditingCommentId(null);
+    setEditText("");
+    setEditImages([]);
+  } catch (err) {
+    console.error("Edit failed:", err);
+    alert("Failed to edit comment");
+  }
+};
+
 
   // ✅ Delete comment
   const handleDeleteComment = async (commentId) => {
