@@ -154,7 +154,7 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
     }
   };
 
-  // ✅ Delete comment
+    // ✅ Delete comment
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm("Are you sure you want to delete this comment?")) return;
     const res = await fetch(`${API_URL}/tasks/${task._id}/comments/${commentId}`, {
@@ -182,6 +182,8 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
         <p><strong>Floor:</strong> {task.floor}</p>
         <p><strong>Room No.:</strong> {task.roomNo}</p>
         <p><strong>Status:</strong> {task.status}</p>
+        {/* ✅ Show critical flag */}
+        <p><strong>Critical:</strong> {task.isCritical ? "Yes ⚠️" : "No"}</p>
       </div>
 
       {/* ✅ Show task images */}
@@ -352,4 +354,3 @@ function TaskDetails({ taskId, onBack, setCurrentPage }) {
 }
 
 export default TaskDetails;
-

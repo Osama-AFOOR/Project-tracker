@@ -13,13 +13,16 @@ const TaskSchema = new mongoose.Schema({
   roomNo: { type: String },                         // Room number
   status: {                                         // Task status (dropdown)
     type: String,
-    enum: ["Open", "In Progress", "Completed", "On Hold" , "Canceled"], // allowed values
+    enum: ["Open", "In Progress", "Completed", "On Hold", "Canceled"], // allowed values
     default: "Open"
   },
   imageUrl: [{ type: String }],                     // Multiple images
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Linked user
 
-  // ✅ New: comments array
+  // ✅ New: critical flag
+  isCritical: { type: Boolean, default: false },    // Indicates if task is critical
+
+  // ✅ Comments array
   comments: [
     {
       text: { type: String, required: true },       // Comment text

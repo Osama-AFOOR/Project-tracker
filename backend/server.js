@@ -9,7 +9,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs"); // ✅ needed for temp file cleanup
+const fs = require("fs"); 
 const cloudinary = require("cloudinary").v2;
 
 // Import database models
@@ -29,7 +29,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Multer setup (must be defined BEFORE using in routes)
+// ✅ Multer setup
 const upload = multer({ dest: "uploads/" });
 
 // ✅ Cloudinary upload route
@@ -44,12 +44,11 @@ app.post("/upload", upload.single("image"), async (req, res) => {
   }
 });
 
-// ✅ Connect to MongoDB (Atlas or local)
+// ✅ Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI || "mongodb://localhost:27017/projectlog")
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB connection error:", err));
-
 
 // --------------------
 // Authentication
@@ -90,7 +89,7 @@ function auth(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { id, role }
+    req.user = decoded; 
     next();
   } catch {
     res.status(401).json({ error: "Invalid token" });
@@ -115,16 +114,14 @@ app.post("/tasks", auth, async (req, res) => {
   res.json(task);
 });
 
-// ✅ Everyone can see all tasks
 app.get("/tasks", auth, async (req, res) => {
   const tasks = await Task.find();
   res.json(tasks);
 });
 
-// ✅ Search tasks with filters
 app.get("/tasks/search", auth, async (req, res) => {
   try {
-    const { name, status, area, floor, roomNo } = req.query;
+    const { name, status, area, floor, roomNo, isCritical } = req.query;
     const query = {};
 
     if (name) query.title = { $regex: name, $options: "i" };
@@ -132,6 +129,7 @@ app.get("/tasks/search", auth, async (req, res) => {
     if (area) query.area = { $regex: area, $options: "i" };
     if (floor) query.floor = floor;
     if (roomNo) query.roomNo = roomNo;
+    if (isCritical !== undefined) query.isCritical = isCritical === "true";
 
     const tasks = await Task.find(query);
     res.json(tasks);
@@ -141,7 +139,6 @@ app.get("/tasks/search", auth, async (req, res) => {
   }
 });
 
-// ✅ Get single task
 app.get("/tasks/:id", auth, async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
@@ -152,19 +149,16 @@ app.get("/tasks/:id", auth, async (req, res) => {
   }
 });
 
-// ✅ Update task with role-based permissions + status validation
 app.put("/admin/tasks/:id", auth, async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ error: "Task not found" });
 
-    // Allowed status values
     const allowedStatuses = ["Open", "In Progress", "Completed", "On Hold", "Canceled"];
     if (req.body.status && !allowedStatuses.includes(req.body.status)) {
       return res.status(400).json({ error: "Invalid status value" });
     }
 
-    // Role logic
     if (req.user.role === "Viewer") {
       return res.status(403).json({ error: "Viewers cannot edit tasks" });
     }
@@ -184,7 +178,10 @@ app.put("/admin/tasks/:id", auth, async (req, res) => {
     }
 
     if (req.user.role === "Admin" || req.user.role === "Editor") {
-      const updateFields = ["title", "description", "status", "imageUrl", "responsible", "area", "floor", "roomNo"];
+      const updateFields = [
+        "title", "description", "status", "imageUrl",
+        "responsible", "area", "floor", "roomNo", "isCritical" // ✅ include critical flag
+      ];
       updateFields.forEach(field => {
         if (req.body[field] !== undefined) {
           task[field] = req.body[field];
@@ -202,7 +199,7 @@ app.put("/admin/tasks/:id", auth, async (req, res) => {
 });
 
 // --------------------
-// Comments (embedded in Task)
+// Comments
 // --------------------
 app.post("/tasks/:id/comments", auth, async (req, res) => {
   const { text, images } = req.body;
@@ -238,24 +235,10 @@ app.delete("/tasks/:taskId/comments/:commentId", auth, async (req, res) => {
   const comment = task.comments.id(req.params.commentId);
   if (!comment) return res.status(404).json({ error: "Comment not found" });
 
-  comment.remove();
+  comment.deleteOne(); // ✅ modern way
   await task.save();
   res.json({ message: "Comment deleted" });
 });
-
-// --------------------
-// Image Upload
-// --------------------
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
-});
-
-app.post("/upload", upload.single("image"), (req, res) => {
-  res.json({ imageUrl: `http://localhost:5000/${req.file.filename}` });
-});
-
-app.use(express.static("uploads"));
 
 // --------------------
 // Admin Routes
@@ -303,7 +286,7 @@ app.delete("/admin/comments/:taskId/:commentId", auth, authorizeRoles("Admin"), 
   const comment = task.comments.id(req.params.commentId);
   if (!comment) return res.status(404).json({ error: "Comment not found" });
 
-  comment.remove();
+  comment.deleteOne(); // ✅ modern way to remove subdocument
   await task.save();
   res.json({ message: "Comment deleted" });
 });
@@ -311,7 +294,7 @@ app.delete("/admin/comments/:taskId/:commentId", auth, authorizeRoles("Admin"), 
 // --------------------
 // Server Start
 // --------------------
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

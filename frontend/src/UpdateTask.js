@@ -66,7 +66,8 @@ function UpdateTask({ taskId, token, onBack }) {
         responsible: formData.responsible,
         area: formData.area,
         floor: formData.floor,
-        roomNo: formData.roomNo
+        roomNo: formData.roomNo,
+        isCritical: formData.isCritical || false // ✅ include critical flag
       };
     }
 
@@ -155,6 +156,16 @@ function UpdateTask({ taskId, token, onBack }) {
             <option value="On Hold">On Hold</option>
             <option value="Canceled">Canceled</option>
           </select>
+
+          {/* ✅ Critical flag */}
+          <label>
+            <input
+              type="checkbox"
+              checked={formData.isCritical || false}
+              onChange={e => setFormData({ ...formData, isCritical: e.target.checked })}
+            />
+            Critical Task
+          </label>
 
           <h3>Images</h3>
           <div className="task-images">

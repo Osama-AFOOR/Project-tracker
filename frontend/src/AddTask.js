@@ -18,6 +18,7 @@ function AddTask({ token, onTaskAdded }) {
   const [roomNo, setRoomNo] = useState("");
   const [images, setImages] = useState([]);
   const [status, setStatus] = useState("Open"); // ✅ dropdown field
+  const [isCritical, setIsCritical] = useState(false); // ✅ new flag
 
   // -----------------------------
   // Handle form submission
@@ -39,7 +40,7 @@ function AddTask({ token, onTaskAdded }) {
 
         const uploadData = await uploadRes.json();
 
-        // ✅ Backend returns { url: "..." }, not imageUrl
+        // ✅ Backend returns { url: "..." }
         if (uploadData.url) {
           imageUrls.push(uploadData.url);
         }
@@ -61,7 +62,8 @@ function AddTask({ token, onTaskAdded }) {
           floor,
           roomNo,
           status,
-          imageUrl: imageUrls // ✅ array of Cloudinary URLs
+          imageUrl: imageUrls,
+          isCritical // ✅ include critical flag
         })
       });
 
@@ -78,6 +80,7 @@ function AddTask({ token, onTaskAdded }) {
       setRoomNo("");
       setImages([]);
       setStatus("Open");
+      setIsCritical(false);
     } catch (err) {
       console.error("Error adding task:", err);
     }
@@ -144,7 +147,18 @@ function AddTask({ token, onTaskAdded }) {
           <option value="In Progress">In Progress</option>
           <option value="Completed">Completed</option>
           <option value="On Hold">On Hold</option>
+          <option value="Canceled">Canceled</option>
         </select><br />
+
+        {/* ✅ Critical flag */}
+        <label>
+          <input
+            type="checkbox"
+            checked={isCritical}
+            onChange={(e) => setIsCritical(e.target.checked)}
+          />
+          Critical Task
+        </label><br />
 
         <input
           type="file"
