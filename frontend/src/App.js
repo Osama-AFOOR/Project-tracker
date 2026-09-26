@@ -283,8 +283,8 @@ function App() {
       >
          {/* Image at top */}
         <div className="task-image">
-          {Array.isArray(task.imageUrls) && task.imageUrls.length > 0 ? (
-            <img src={task.imageUrls[0]} alt={task.title} />
+          {Array.isArray(task.imageUrl) && task.imageUrl.length > 0 ? (
+            <img src={task.imageUrl[0]} alt={task.title} />
           ) : Array.isArray(task.images) && task.images.length > 0 ? (
             <img src={task.images[0]} alt={task.title} />
           ) : task.imageUrl ? (
