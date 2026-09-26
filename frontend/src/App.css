@@ -226,14 +226,14 @@ input:focus, textarea:focus, select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 9999;
 }
 
+/* Image inside lightbox */
 .lightbox-image {
   max-width: 90%;
   max-height: 80%;
-  border-radius: 8px;
-  box-shadow: 0 0 20px #000;
+  border-radius: 6px;
 }
 
 /* Navigation buttons */
@@ -241,40 +241,60 @@ input:focus, textarea:focus, select:focus {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.8);
   border: none;
-  font-size: 2rem;
-  cursor: pointer;
-  padding: 10px;
   border-radius: 50%;
-  color: white;
+  width: 40px;   /* ✅ fixed size */
+  height: 40px;  /* ✅ fixed size */
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-button.left {
-  left: 20px;
+  left: 10px;
 }
 
 .nav-button.right {
-  right: 20px;
-}
-
-.nav-button:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
+  right: 10px;
 }
 
 /* Close button */
 .close-button {
   position: absolute;
-  top: 20px;
-  right: 20px;
-  background: rgba(255,255,255,0.2);
+  top: 15px;
+  right: 15px;
+  background: rgba(255,255,255,0.8);
   border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 8px;
   border-radius: 50%;
-  color: white;
+  width: 35px;
+  height: 35px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile-specific tweaks */
+@media (max-width: 600px) {
+  .nav-button {
+    width: 35px;
+    height: 35px;
+    font-size: 18px;
+  }
+  .close-button {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+  }
+}
+
+.nav-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 /* Responsive design */
