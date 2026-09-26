@@ -203,25 +203,28 @@ function App() {
                 </div>
               </div>
 
-                           {/* ✅ Sorting Options */}
+              {/* ✅ Sorting Options */}
               <div className="sort-container">
                 <label>Sort by: </label>
-                <select onChange={e => {
-                  const value = e.target.value;
-                  let sorted = [...tasks];
-                  if (value === "date") {
-                    sorted.sort((a, b) => new Date(b.addDate) - new Date(a.addDate));
-                  } else if (value === "status") {
-                    sorted.sort((a, b) => a.status.localeCompare(b.status));
-                  } else if (value === "critical") {
-                    sorted.sort((a, b) => (b.isCritical === true) - (a.isCritical === true));
-                  }
-                  setTasks(sorted);
-                }}>
-                  <option value="">Default</option>
+                <select
+                  defaultValue="critical"
+                  onChange={e => {
+                    const value = e.target.value;
+                    let sorted = [...tasks];
+                    if (value === "date") {
+                      sorted.sort((a, b) => new Date(b.addDate) - new Date(a.addDate));
+                    } else if (value === "status") {
+                      sorted.sort((a, b) => a.status.localeCompare(b.status));
+                    } else if (value === "critical") {
+                      sorted.sort((a, b) => (b.isCritical === true) - (a.isCritical === true));
+                    }
+                    setTasks(sorted);
+                  }}
+                >
+                  <option value="critical">Critical First</option>
                   <option value="date">Date</option>
                   <option value="status">Status</option>
-                  <option value="critical">Critical First</option>
+                  <option value="">Default</option>
                 </select>
               </div>
 
@@ -281,7 +284,9 @@ function App() {
                     >
                       {/* Image at top */}
                       <div className="task-image">
-                        {task.imageUrl ? (
+                        {task.images && task.images.length > 0 ? (
+                          <img src={task.images[0]} alt={task.title} />
+                        ) : task.imageUrl ? (
                           <img src={task.imageUrl} alt={task.title} />
                         ) : (
                           <div className="placeholder">No Image</div>
@@ -314,6 +319,7 @@ function App() {
               </div>
             </div>
           )}
+
 
           {/* ✅ TaskDetails when a task is selected */}
           {currentPage === "dashboard" && selectedTaskId && (
