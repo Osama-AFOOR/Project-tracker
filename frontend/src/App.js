@@ -202,121 +202,121 @@ function App() {
                   <Pie data={chartData} options={{ maintainAspectRatio: false }} />
                 </div>
               </div>
+{/* ✅ Sorting Options */}
+<div className="sort-container">
+  <label>Sort by: </label>
+  <select
+    defaultValue="critical"   // ✅ default sorting is Critical First
+    onChange={e => {
+      const value = e.target.value;
+      let sorted = [...tasks];
+      if (value === "date") {
+        sorted.sort((a, b) => new Date(b.addDate) - new Date(a.addDate));
+      } else if (value === "status") {
+        sorted.sort((a, b) => a.status.localeCompare(b.status));
+      } else if (value === "critical") {
+        sorted.sort((a, b) => (b.isCritical === true) - (a.isCritical === true));
+      }
+      setTasks(sorted);
+    }}
+  >
+    <option value="critical">Critical First</option>
+    <option value="date">Date</option>
+    <option value="status">Status</option>
+    <option value="">Default</option>
+  </select>
+</div>
 
-              {/* ✅ Sorting Options */}
-              <div className="sort-container">
-                <label>Sort by: </label>
-                <select
-                  defaultValue="critical"
-                  onChange={e => {
-                    const value = e.target.value;
-                    let sorted = [...tasks];
-                    if (value === "date") {
-                      sorted.sort((a, b) => new Date(b.addDate) - new Date(a.addDate));
-                    } else if (value === "status") {
-                      sorted.sort((a, b) => a.status.localeCompare(b.status));
-                    } else if (value === "critical") {
-                      sorted.sort((a, b) => (b.isCritical === true) - (a.isCritical === true));
-                    }
-                    setTasks(sorted);
-                  }}
-                >
-                  <option value="critical">Critical First</option>
-                  <option value="date">Date</option>
-                  <option value="status">Status</option>
-                  <option value="">Default</option>
-                </select>
-              </div>
+{/* ✅ Search Container */}
+<div className="search-container">
+  <div className="search-fields">
+    <input
+      placeholder="Task name"
+      value={filters.name}
+      onChange={e => setFilters({ ...filters, name: e.target.value })}
+    />
+    <select
+      value={filters.status}
+      onChange={e => setFilters({ ...filters, status: e.target.value })}
+    >
+      <option value="">All statuses</option>
+      <option value="Open">Open</option>
+      <option value="In Progress">In Progress</option>
+      <option value="Completed">Completed</option>
+      <option value="On Hold">On Hold</option>
+      <option value="Canceled">Canceled</option>
+    </select>
+    <input
+      placeholder="Area"
+      value={filters.area}
+      onChange={e => setFilters({ ...filters, area: e.target.value })}
+    />
+    <input
+      placeholder="Floor"
+      value={filters.floor}
+      onChange={e => setFilters({ ...filters, floor: e.target.value })}
+    />
+    <input
+      placeholder="Room No."
+      value={filters.roomNo}
+      onChange={e => setFilters({ ...filters, roomNo: e.target.value })}
+    />
+  </div>
 
-              {/* ✅ Search Container */}
-              <div className="search-container">
-                <div className="search-fields">
-                  <input
-                    placeholder="Task name"
-                    value={filters.name}
-                    onChange={e => setFilters({ ...filters, name: e.target.value })}
-                  />
-                  <select
-                    value={filters.status}
-                    onChange={e => setFilters({ ...filters, status: e.target.value })}
-                  >
-                    <option value="">All statuses</option>
-                    <option value="Open">Open</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                    <option value="On Hold">On Hold</option>
-                    <option value="Canceled">Canceled</option>
-                  </select>
-                  <input
-                    placeholder="Area"
-                    value={filters.area}
-                    onChange={e => setFilters({ ...filters, area: e.target.value })}
-                  />
-                  <input
-                    placeholder="Floor"
-                    value={filters.floor}
-                    onChange={e => setFilters({ ...filters, floor: e.target.value })}
-                  />
-                  <input
-                    placeholder="Room No."
-                    value={filters.roomNo}
-                    onChange={e => setFilters({ ...filters, roomNo: e.target.value })}
-                  />
-                </div>
+  <div className="search-actions">
+    <button onClick={handleSearch}>Search</button>
+    <button onClick={handleReset}>Reset</button>
+  </div>
+</div>
 
-                <div className="search-actions">
-                  <button onClick={handleSearch}>Search</button>
-                  <button onClick={handleReset}>Reset</button>
-                </div>
-              </div>
+{/* ✅ Task List */}
+<div className="task-list">
+  {tasks.map(task => {
+    const formattedDate = task.addDate
+      ? new Date(task.addDate).toISOString().split("T")[0]
+      : "";
 
-              {/* ✅ Task List */}
-              <div className="task-list">
-                {tasks.map(task => {
-                  const formattedDate = task.addDate
-                    ? new Date(task.addDate).toISOString().split("T")[0]
-                    : "";
+    return (
+      <div 
+        key={task._id || task.id} 
+        className={`task-card ${task.isCritical ? "critical" : ""}`}
+      >
+        {/* Image at top */}
+        <div className="task-image">
+          {task.images && task.images.length > 0 ? (
+            <img src={task.images[0]} alt={task.title} />
+          ) : task.imageUrl ? (
+            <img src={task.imageUrl} alt={task.title} />
+          ) : (
+            <div className="placeholder">No Image</div>
+          )}
+        </div>
 
-                  return (
-                    <div 
-                      key={task._id || task.id} 
-                      className={`task-card ${task.isCritical ? "critical" : ""}`}
-                    >
-                      {/* Image at top */}
-                      <div className="task-image">
-                        {task.images && task.images.length > 0 ? (
-                          <img src={task.images[0]} alt={task.title} />
-                        ) : task.imageUrl ? (
-                          <img src={task.imageUrl} alt={task.title} />
-                        ) : (
-                          <div className="placeholder">No Image</div>
-                        )}
-                      </div>
+        {/* Info below */}
+        <div className="task-info">
+          <div className="task-meta">
+            <span className="task-date">📅 {formattedDate}</span>
+            <span className="task-room">Room {task.roomNo}</span>
+          </div>
 
-                      {/* Info below */}
-                      <div className="task-info">
-                        <div className="task-meta">
-                          <span className="task-date">📅 {formattedDate}</span>
-                          <span className="task-room">Room {task.roomNo}</span>
-                        </div>
+          <div className="task-header">
+            <strong>{task.title}</strong>
+            <span className={`status-badge ${task.status.toLowerCase().replace(" ", "-")}`}>
+              {task.status}
+            </span>
+          </div>
 
-                        <div className="task-header">
-                          <strong>{task.title}</strong>
-                          <span className={`status-badge ${task.status.toLowerCase().replace(" ", "-")}`}>
-                            {task.status}
-                          </span>
-                        </div>
+          <p className="task-desc">{task.description}</p>
 
-                        <p className="task-desc">{task.description}</p>
+          {task.isCritical && <p className="critical-mark">⚠ Critical</p>}
 
-                        {task.isCritical && <p className="critical-mark">⚠ Critical</p>}
+          <button onClick={() => setSelectedTaskId(task._id)}>View</button>
+        </div>
+      </div>
+    );
+  })}
+</div>
 
-                        <button onClick={() => setSelectedTaskId(task._id)}>View</button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
           )}
 
