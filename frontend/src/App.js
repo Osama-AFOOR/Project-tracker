@@ -39,14 +39,20 @@ function App() {
 
   const [activities, setActivities] = useState([]);
 
-  const loadAllTasks = React.useCallback(() => {
-    fetch(`${API_URL}/tasks`, {
-      headers: { Authorization: token }
+ const loadAllTasks = React.useCallback(() => {
+  fetch(`${API_URL}/tasks`, {
+    headers: { Authorization: token }
+  })
+    .then(res => res.json())
+    .then(data => {
+      let tasksArray = Array.isArray(data) ? data : [];
+      // ✅ Default sort: critical first
+      tasksArray.sort((a, b) => (b.isCritical === true) - (a.isCritical === true));
+      setTasks(tasksArray);
     })
-      .then(res => res.json())
-      .then(data => Array.isArray(data) ? setTasks(data) : setTasks([]))
-      .catch(err => console.error("Error fetching tasks:", err));
-  }, [token]);
+    .catch(err => console.error("Error fetching tasks:", err));
+}, [token]);
+
 
   const loadActivities = React.useCallback(() => {
     fetch(`${API_URL}/activities/recent`, {
