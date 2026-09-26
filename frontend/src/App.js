@@ -212,7 +212,7 @@ function App() {
 <div className="sort-container">
   <label>Sort by: </label>
   <select
-    defaultValue="date"   // ✅ default sorting is Critical First
+    defaultValue="critical"   // ✅ default sorting is Critical First
     onChange={e => {
       const value = e.target.value;
       let sorted = [...tasks];
