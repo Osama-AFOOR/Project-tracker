@@ -541,3 +541,53 @@ input:focus, textarea:focus, select:focus {
   margin: 0;
   font-size: 14px;
 }
+/* Landing Page Styles */
+.landing-container {
+  text-align: center;
+  padding: 2rem;
+}
+
+.card-container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  width: 300px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.card h2 {
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.card p {
+  color: #666;
+}
+
+.card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.card li {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+

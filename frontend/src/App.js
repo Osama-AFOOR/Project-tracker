@@ -25,7 +25,7 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [role, setRole] = useState("");
   const [tasks, setTasks] = useState([]);
-  const [currentPage, setCurrentPage] = useState("dashboard");
+  const [currentPage, setCurrentPage] = useState("landing"); // ✅ start at landing
   const [selectedTaskId, setSelectedTaskId] = useState(null);
 
   // ✅ Date filter
@@ -41,35 +41,51 @@ function App() {
     roomNo: ""
   });
 
-  // ✅ Load all tasks
-const loadAllTasks = React.useCallback(() => {
-  fetch(`${API_URL}/tasks`, {
-    headers: { Authorization: token }
-  })
-    .then(res => res.json())
-    .then(data => Array.isArray(data) ? setTasks(data) : setTasks([]))
-    .catch(err => console.error("Error fetching tasks:", err));
-}, [token]); // ✅ depends on token
+  // ✅ Activities state
+  const [activities, setActivities] = useState([]);
 
-useEffect(() => {
-  if (token) {
-    try {
-      const decoded = jwtDecode(token);
-      setRole(decoded.role);
-    } catch (err) {
-      console.error("Token decode error:", err);
-      setRole("");
+  // ✅ Load all tasks
+  const loadAllTasks = React.useCallback(() => {
+    fetch(`${API_URL}/tasks`, {
+      headers: { Authorization: token }
+    })
+      .then(res => res.json())
+      .then(data => Array.isArray(data) ? setTasks(data) : setTasks([]))
+      .catch(err => console.error("Error fetching tasks:", err));
+  }, [token]);
+
+  // ✅ Load recent activities
+  const loadActivities = React.useCallback(() => {
+    fetch(`${API_URL}/activities/recent`, {
+      headers: { Authorization: token }
+    })
+      .then(res => res.json())
+      .then(data => Array.isArray(data) ? setActivities(data) : setActivities([]))
+      .catch(err => console.error("Error fetching activities:", err));
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        setRole(decoded.role);
+      } catch (err) {
+        console.error("Token decode error:", err);
+        setRole("");
+      }
+      loadAllTasks();
+      loadActivities();
+      setCurrentPage("landing"); // ✅ force landing after login
     }
-    loadAllTasks();
-  }
-}, [token, loadAllTasks]); // ✅ include loadAllTasks
+  }, [token, loadAllTasks, loadActivities]);
 
   const logout = () => {
     localStorage.removeItem("token");
     setToken("");
     setRole("");
     setTasks([]);
-    setCurrentPage("dashboard");
+    setActivities([]);
+    setCurrentPage("landing"); // ✅ reset to landing after logout
     setSelectedTaskId(null);
   };
 
@@ -132,6 +148,9 @@ useEffect(() => {
         <>
           {/* ✅ Navigation Bar */}
           <nav className="top-bar">
+            <button onClick={() => { setCurrentPage("landing"); setSelectedTaskId(null); }}>
+              Home
+            </button>
             <button onClick={() => { setCurrentPage("dashboard"); setSelectedTaskId(null); }}>
               Dashboard
             </button>
@@ -151,12 +170,41 @@ useEffect(() => {
             <button onClick={logout}>Logout</button>
           </nav>
 
+          {/* ✅ Landing Page */}
+          {currentPage === "landing" && (
+            <div className="landing-container">
+              <h2>Welcome to Project Tracker</h2>
+              <div className="card-container">
+                {/* Card 1: Dashboard */}
+                <div className="card" onClick={() => setCurrentPage("dashboard")}>
+                  <h3>📋 Project Log Dashboard</h3>
+                  <p>View and manage all tasks</p>
+                </div>
+
+                {/* Card 2: Recent Activities */}
+                <div className="card">
+                  <h3>🕒 Recent Activities</h3>
+                  {activities.length === 0 ? (
+                    <p>No recent activity</p>
+                  ) : (
+                    <ul>
+                      {activities.map((a, i) => (
+                        <li key={i}>
+                          <strong>{a.action}</strong> - {a.details} ({new Date(a.timestamp).toLocaleString()})
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ✅ Dashboard */}
           {currentPage === "dashboard" && !selectedTaskId && (
             <div>
               {/* ✅ Summary + Chart Side by Side */}
               <div className="dashboard-top">
-                {/* Left side: Summary + Date Filter */}
                 <div className="dashboard-left">
                   <h2>Task Overview</h2>
                   <div className="summary-stats">
@@ -165,22 +213,18 @@ useEffect(() => {
                     <p>In Progress: {tasks.filter(t => t.status === "In Progress").length}</p>
                     <p>Not Started: {tasks.filter(t => t.status === "Open").length}</p>
                   </div>
-
-                  {/* Date Filter */}
                   <div className="date-filter">
                     <label>From: <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} /></label>
                     <label>To: <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} /></label>
                     <button onClick={applyDateFilter}>Apply</button>
                   </div>
                 </div>
-
-                {/* Right side: Pie Chart */}
                 <div className="dashboard-right">
                   <Pie data={chartData} options={{ maintainAspectRatio: false }} />
                 </div>
               </div>
 
-              {/* ✅ Search Container */}
+                        {/* ✅ Search Container */}
               <div className="search-container">
                 <div className="search-fields">
                   <input
@@ -223,7 +267,7 @@ useEffect(() => {
                 </div>
               </div>
 
-                            {/* ✅ Task List */}
+              {/* ✅ Task List */}
               {tasks.map(task => {
                 const formattedDate = task.addDate
                   ? new Date(task.addDate).toISOString().split("T")[0]
@@ -300,4 +344,4 @@ useEffect(() => {
   );
 }
 
-export default App;
+export default App;   
