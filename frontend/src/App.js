@@ -15,24 +15,20 @@ import UpdateTask from './UpdateTask';
 import AdminPanel from './AdminPanel';
 import './App.css';
 
-// ✅ Register chart elements
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// ✅ Define API base URL from environment variable
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [role, setRole] = useState("");
   const [tasks, setTasks] = useState([]);
-  const [currentPage, setCurrentPage] = useState("landing"); // ✅ start at landing
+  const [currentPage, setCurrentPage] = useState("landing");
   const [selectedTaskId, setSelectedTaskId] = useState(null);
 
-  // ✅ Date filter
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // ✅ Search filters
   const [filters, setFilters] = useState({
     name: "",
     status: "",
@@ -41,10 +37,8 @@ function App() {
     roomNo: ""
   });
 
-  // ✅ Activities state
   const [activities, setActivities] = useState([]);
 
-  // ✅ Load all tasks
   const loadAllTasks = React.useCallback(() => {
     fetch(`${API_URL}/tasks`, {
       headers: { Authorization: token }
@@ -54,7 +48,6 @@ function App() {
       .catch(err => console.error("Error fetching tasks:", err));
   }, [token]);
 
-  // ✅ Load recent activities
   const loadActivities = React.useCallback(() => {
     fetch(`${API_URL}/activities/recent`, {
       headers: { Authorization: token }
@@ -75,7 +68,7 @@ function App() {
       }
       loadAllTasks();
       loadActivities();
-      setCurrentPage("landing"); // ✅ force landing after login
+      setCurrentPage("landing");
     }
   }, [token, loadAllTasks, loadActivities]);
 
@@ -85,11 +78,10 @@ function App() {
     setRole("");
     setTasks([]);
     setActivities([]);
-    setCurrentPage("landing"); // ✅ reset to landing after logout
+    setCurrentPage("landing");
     setSelectedTaskId(null);
   };
 
-  // ✅ Apply date filter
   const applyDateFilter = () => {
     let filtered = tasks;
     if (startDate) {
@@ -101,7 +93,6 @@ function App() {
     setTasks(filtered);
   };
 
-  // ✅ Handle search
   const handleSearch = async () => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
@@ -115,7 +106,6 @@ function App() {
     setTasks(Array.isArray(data) ? data : []);
   };
 
-  // ✅ Reset search
   const handleReset = () => {
     setFilters({ name: "", status: "", area: "", floor: "", roomNo: "" });
     setStartDate("");
@@ -123,7 +113,6 @@ function App() {
     loadAllTasks();
   };
 
-  // ✅ Chart data
   const chartData = {
     labels: ["Completed", "In Progress", "Open"],
     datasets: [
@@ -146,7 +135,6 @@ function App() {
         <Login setToken={setToken} />
       ) : (
         <>
-          {/* ✅ Navigation Bar */}
           <nav className="top-bar">
             <button onClick={() => { setCurrentPage("landing"); setSelectedTaskId(null); }}>
               Home
@@ -154,34 +142,27 @@ function App() {
             <button onClick={() => { setCurrentPage("dashboard"); setSelectedTaskId(null); }}>
               Dashboard
             </button>
-
             {(role === "Admin" || role === "Editor") && (
               <button onClick={() => { setCurrentPage("addTask"); setSelectedTaskId(null); }}>
                 Add Task
               </button>
             )}
-
             {role === "Admin" && (
               <button onClick={() => setCurrentPage("adminPanel")}>
                 Admin Panel
               </button>
             )}
-
             <button onClick={logout}>Logout</button>
           </nav>
 
-          {/* ✅ Landing Page */}
           {currentPage === "landing" && (
             <div className="landing-container">
               <h2>Welcome to Project Tracker</h2>
               <div className="card-container">
-                {/* Card 1: Dashboard */}
                 <div className="card" onClick={() => setCurrentPage("dashboard")}>
                   <h3>📋 Project Log Dashboard</h3>
                   <p>View and manage all tasks</p>
                 </div>
-
-                {/* Card 2: Recent Activities */}
                 <div className="card">
                   <h3>🕒 Recent Activities</h3>
                   {activities.length === 0 ? (
@@ -200,10 +181,8 @@ function App() {
             </div>
           )}
 
-          {/* ✅ Dashboard */}
           {currentPage === "dashboard" && !selectedTaskId && (
             <div>
-              {/* ✅ Summary + Chart Side by Side */}
               <div className="dashboard-top">
                 <div className="dashboard-left">
                   <h2>Task Overview</h2>
@@ -224,7 +203,29 @@ function App() {
                 </div>
               </div>
 
-                        {/* ✅ Search Container */}
+                           {/* ✅ Sorting Options */}
+              <div className="sort-container">
+                <label>Sort by: </label>
+                <select onChange={e => {
+                  const value = e.target.value;
+                  let sorted = [...tasks];
+                  if (value === "date") {
+                    sorted.sort((a, b) => new Date(b.addDate) - new Date(a.addDate));
+                  } else if (value === "status") {
+                    sorted.sort((a, b) => a.status.localeCompare(b.status));
+                  } else if (value === "critical") {
+                    sorted.sort((a, b) => (b.isCritical === true) - (a.isCritical === true));
+                  }
+                  setTasks(sorted);
+                }}>
+                  <option value="">Default</option>
+                  <option value="date">Date</option>
+                  <option value="status">Status</option>
+                  <option value="critical">Critical First</option>
+                </select>
+              </div>
+
+              {/* ✅ Search Container */}
               <div className="search-container">
                 <div className="search-fields">
                   <input
@@ -260,7 +261,6 @@ function App() {
                   />
                 </div>
 
-                {/* Buttons centered below */}
                 <div className="search-actions">
                   <button onClick={handleSearch}>Search</button>
                   <button onClick={handleReset}>Reset</button>
@@ -268,35 +268,50 @@ function App() {
               </div>
 
               {/* ✅ Task List */}
-              {tasks.map(task => {
-                const formattedDate = task.addDate
-                  ? new Date(task.addDate).toISOString().split("T")[0]
-                  : "";
+              <div className="task-list">
+                {tasks.map(task => {
+                  const formattedDate = task.addDate
+                    ? new Date(task.addDate).toISOString().split("T")[0]
+                    : "";
 
-                return (
-                  <div key={task._id || task.id} className="task-card">
-                    {/* Top row: Date + Room No */}
-                    <div className="task-meta">
-                      <span className="task-date">📅 {formattedDate}</span>
-                      <span className="task-room"> Room {task.roomNo}</span>
+                  return (
+                    <div 
+                      key={task._id || task.id} 
+                      className={`task-card ${task.isCritical ? "critical" : ""}`}
+                    >
+                      {/* Image at top */}
+                      <div className="task-image">
+                        {task.imageUrl ? (
+                          <img src={task.imageUrl} alt={task.title} />
+                        ) : (
+                          <div className="placeholder">No Image</div>
+                        )}
+                      </div>
+
+                      {/* Info below */}
+                      <div className="task-info">
+                        <div className="task-meta">
+                          <span className="task-date">📅 {formattedDate}</span>
+                          <span className="task-room">Room {task.roomNo}</span>
+                        </div>
+
+                        <div className="task-header">
+                          <strong>{task.title}</strong>
+                          <span className={`status-badge ${task.status.toLowerCase().replace(" ", "-")}`}>
+                            {task.status}
+                          </span>
+                        </div>
+
+                        <p className="task-desc">{task.description}</p>
+
+                        {task.isCritical && <p className="critical-mark">⚠ Critical</p>}
+
+                        <button onClick={() => setSelectedTaskId(task._id)}>View</button>
+                      </div>
                     </div>
-
-                    {/* Title + Status */}
-                    <div className="task-header">
-                      <strong>{task.title}</strong>
-                      <span className={`status-badge ${task.status.toLowerCase().replace(" ", "-")}`}>
-                        {task.status}
-                      </span>
-                    </div>
-
-                    {/* Description (one line only) */}
-                    <p className="task-desc">{task.description}</p>
-
-                    {/* View button */}
-                    <button onClick={() => setSelectedTaskId(task._id)}>View</button>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -336,7 +351,6 @@ function App() {
         </>
       )}
       
-      {/* ✅ Footer */}
       <footer className="app-footer">
         <p>© {new Date().getFullYear()} Project Log Dashboard. All rights reserved.</p>
       </footer>
@@ -344,4 +358,4 @@ function App() {
   );
 }
 
-export default App;   
+export default App;
