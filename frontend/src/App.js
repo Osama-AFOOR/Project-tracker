@@ -281,9 +281,11 @@ function App() {
         key={task._id || task.id} 
         className={`task-card ${task.isCritical ? "critical" : ""}`}
       >
-        {/* Image at top */}
+         {/* Image at top */}
         <div className="task-image">
-          {task.images && task.images.length > 0 ? (
+          {Array.isArray(task.imageUrls) && task.imageUrls.length > 0 ? (
+            <img src={task.imageUrls[0]} alt={task.title} />
+          ) : Array.isArray(task.images) && task.images.length > 0 ? (
             <img src={task.images[0]} alt={task.title} />
           ) : task.imageUrl ? (
             <img src={task.imageUrl} alt={task.title} />
@@ -291,6 +293,7 @@ function App() {
             <div className="placeholder">No Image</div>
           )}
         </div>
+
 
         {/* Info below */}
         <div className="task-info">
