@@ -26,7 +26,10 @@ function LandingPage({ token, setCurrentPage }) {
         headers: { Authorization: token }
       })
         .then(res => res.json())
-        .then(data => setActivities(data))
+        .then(data => {
+          console.log("Activities from server:", data); // 🔍 Debug log
+          setActivities(data);
+        })
         .catch(err => console.error("Error fetching activities:", err));
     }
   }, [token, role]);
@@ -52,7 +55,8 @@ function LandingPage({ token, setCurrentPage }) {
               <ul>
                 {activities.map((a, i) => (
                   <li key={i}>
-                    <strong>{a.userId?.username}</strong> ({a.userId?.role}) →{" "}
+                    <strong>{a.userId?.username || "Unknown User"}</strong>{" "}
+                    ({a.userId?.role || "Unknown Role"}) →{" "}
                     {a.action} - {a.details} (
                     {new Date(a.timestamp).toLocaleString()})
                   </li>
