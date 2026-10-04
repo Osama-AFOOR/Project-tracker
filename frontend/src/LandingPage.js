@@ -41,7 +41,7 @@ function LandingPage({ token, setCurrentPage }) {
         
         {/* Card 1: Dashboard */}
         <div className="card" onClick={() => setCurrentPage("dashboard")}>
-          <h2>📋 Project Log Dashboard</h2>
+          <h2>📋 CMC06 Dashboard</h2>
           <p>View and manage all tasks</p>
         </div>
 
