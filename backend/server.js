@@ -1,6 +1,5 @@
 // File: server.js
 
-// Import required libraries
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -8,14 +7,12 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
-const path = require("path");
 const fs = require("fs");
 const cloudinary = require("cloudinary").v2;
 
-// Import database models
 const User = require("./models/User");
 const Task = require("./models/Task");
-const UserActivity = require("./models/UserActivity"); // ✅ NEW
+const UserActivity = require("./models/UserActivity");
 
 // ✅ Configure Cloudinary
 cloudinary.config({
@@ -25,8 +22,6 @@ cloudinary.config({
 });
 
 const app = express();
-
-// ✅ Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -37,10 +32,9 @@ const upload = multer({ dest: "uploads/" });
 app.post("/upload", upload.single("image"), async (req, res) => {
   try {
     const result = await cloudinary.uploader.upload(req.file.path);
-    fs.unlinkSync(req.file.path); // clean up temp file
+    fs.unlinkSync(req.file.path);
     res.json({ url: result.secure_url });
 
-    // ✅ Log activity
     if (req.user) {
       await UserActivity.create({
         userId: req.user.id,
@@ -69,7 +63,6 @@ app.post("/signup", async (req, res) => {
   const user = new User({ username, password: hashed, role: role || "Viewer" });
   await user.save();
 
-  // ✅ Log activity
   await UserActivity.create({
     userId: user._id,
     action: "signup",
@@ -90,10 +83,9 @@ app.post("/login", async (req, res) => {
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET
     );
 
-    // ✅ Log activity
     await UserActivity.create({
       userId: user._id,
       action: "login",
@@ -128,7 +120,6 @@ function authorizeRoles(...roles) {
     next();
   };
 }
-
 // --------------------
 // Task Management
 // --------------------
@@ -456,7 +447,19 @@ app.get("/activities/recent", auth, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch activities" });
   }
 });
-// ✅ INSERT THE NEW ADMIN-ONLY ENDPOINT HERE
+// ✅ User-only: view own recent activities
+app.get("/activities/recent", auth, async (req, res) => {
+  try {
+    const activities = await UserActivity.find({ userId: req.user.id })
+      .sort({ timestamp: -1 })
+      .limit(10);
+    res.json(activities);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch activities" });
+  }
+});
+
+// ✅ Admin-only: view all user activities
 app.get("/activities/all", auth, authorizeRoles("Admin"), async (req, res) => {
   try {
     const activities = await UserActivity.find({})
@@ -475,30 +478,11 @@ app.get("/activities/all", auth, authorizeRoles("Admin"), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch all activities" });
   }
 });
-app.get("/activities/all", auth, authorizeRoles("Admin"), async (req, res) => {
-  try {
-    const activities = await UserActivity.find({})
-      .populate("userId", "username role") // include username + role
-      .sort({ timestamp: -1 })
-      .limit(50);
-
-    await UserActivity.create({
-      userId: req.user.id,
-      action: "view-all-activities",
-      details: "Admin viewed all user activities"
-    });
-
-    res.json(activities);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch all activities" });
-  }
-});
-
 
 // --------------------
 // Server Start
 // --------------------
-const PORT = 5000; // ✅ use Railway’s PORT
+const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
