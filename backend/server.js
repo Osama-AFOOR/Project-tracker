@@ -478,7 +478,7 @@ app.get("/activities/all", auth, authorizeRoles("Admin"), async (req, res) => {
 app.get("/activities/all", auth, authorizeRoles("Admin"), async (req, res) => {
   try {
     const activities = await UserActivity.find({})
-      .populate("userId", "username role")
+      .populate("userId", "username role") // include username + role
       .sort({ timestamp: -1 })
       .limit(50);
 
@@ -493,6 +493,7 @@ app.get("/activities/all", auth, authorizeRoles("Admin"), async (req, res) => {
     res.status(500).json({ error: "Failed to fetch all activities" });
   }
 });
+
 
 // --------------------
 // Server Start
