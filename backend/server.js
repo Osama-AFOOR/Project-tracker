@@ -456,7 +456,25 @@ app.get("/activities/recent", auth, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch activities" });
   }
 });
+// ✅ INSERT THE NEW ADMIN-ONLY ENDPOINT HERE
+app.get("/activities/all", auth, authorizeRoles("Admin"), async (req, res) => {
+  try {
+    const activities = await UserActivity.find({})
+      .populate("userId", "username role")
+      .sort({ timestamp: -1 })
+      .limit(50);
 
+    await UserActivity.create({
+      userId: req.user.id,
+      action: "view-all-activities",
+      details: "Admin viewed all user activities"
+    });
+
+    res.json(activities);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch all activities" });
+  }
+});
 // --------------------
 // Server Start
 // --------------------
