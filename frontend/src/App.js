@@ -13,6 +13,7 @@ import AddTask from './AddTask';
 import TaskDetails from './TaskDetails';
 import UpdateTask from './UpdateTask';
 import AdminPanel from './AdminPanel';
+import LandingPage from "./LandingPage";
 import './App.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -37,8 +38,6 @@ function App() {
     roomNo: ""
   });
 
-  const [activities, setActivities] = useState([]);
-
  const loadAllTasks = React.useCallback(() => {
   fetch(`${API_URL}/tasks`, {
     headers: { Authorization: token }
@@ -53,16 +52,6 @@ function App() {
     .catch(err => console.error("Error fetching tasks:", err));
 }, [token]);
 
-
-  const loadActivities = React.useCallback(() => {
-    fetch(`${API_URL}/activities/recent`, {
-      headers: { Authorization: token }
-    })
-      .then(res => res.json())
-      .then(data => Array.isArray(data) ? setActivities(data) : setActivities([]))
-      .catch(err => console.error("Error fetching activities:", err));
-  }, [token]);
-
   useEffect(() => {
     if (token) {
       try {
@@ -73,17 +62,15 @@ function App() {
         setRole("");
       }
       loadAllTasks();
-      loadActivities();
       setCurrentPage("landing");
     }
-  }, [token, loadAllTasks, loadActivities]);
+  }, [token, loadAllTasks]);
 
   const logout = () => {
     localStorage.removeItem("token");
     setToken("");
     setRole("");
     setTasks([]);
-    setActivities([]);
     setCurrentPage("landing");
     setSelectedTaskId(null);
   };
@@ -162,30 +149,11 @@ function App() {
           </nav>
 
           {currentPage === "landing" && (
-            <div className="landing-container">
-              <h2>Welcome to Project Tracker</h2>
-              <div className="card-container">
-                <div className="card" onClick={() => setCurrentPage("dashboard")}>
-                  <h3>📋 Project Log Dashboard</h3>
-                  <p>View and manage all tasks</p>
-                </div>
-                <div className="card">
-                  <h3>🕒 Recent Activities</h3>
-                  {activities.length === 0 ? (
-                    <p>No recent activity</p>
-                  ) : (
-                    <ul>
-                      {activities.map((a, i) => (
-                        <li key={i}>
-                          <strong>{a.action}</strong> - {a.details} ({new Date(a.timestamp).toLocaleString()})
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+            <LandingPage
+              token={token}
+              setCurrentPage={setCurrentPage}
+            />
+)}
 
           {currentPage === "dashboard" && !selectedTaskId && (
             <div>
