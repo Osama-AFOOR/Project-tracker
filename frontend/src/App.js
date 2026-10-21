@@ -46,6 +46,7 @@ function App() {
     .then(data => {
       let tasksArray = Array.isArray(data) ? data : [];
       // ✅ Default sort: critical first
+      
       tasksArray.sort((a, b) => (b.isCritical === true) - (a.isCritical === true));
       setTasks(tasksArray);
     })
