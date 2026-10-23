@@ -14,7 +14,7 @@ import TaskDetails from './TaskDetails';
 import UpdateTask from './UpdateTask';
 import AdminPanel from './AdminPanel';
 import LandingPage from "./LandingPage";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import './App.css';
 
@@ -108,69 +108,345 @@ function App() {
     setEndDate("");
     loadAllTasks();
   };
-const exportToExcel = () => {
+  const getBase64Image = async (url) => {
+  try {
+    const response = await fetch(url);
 
-  if (tasks.length === 0) {
-    alert("No tasks available to export");
-    return;
+    if (!response.ok) return null;
+
+    const blob = await response.blob();
+
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        resolve(reader.result);
+      };
+
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error("Image conversion error:", error);
+    return null;
   }
+};
+const exportToExcel = async () => {
+  try {
 
-const exportData = tasks.map(task => ({
-  Title: task.title || "",
-  Description: task.description || "",
-  Status: task.status || "",
-  Critical: task.isCritical ? "Yes" : "No",
-  Responsible: task.responsible || "",
-  Area: task.area || "",
-  Floor: task.floor || "",
-  Room: task.roomNo || "",
-  Date: task.addDate
-    ? new Date(task.addDate).toLocaleDateString()
-    : "",
-
-  Images_Count:
-  Array.isArray(task.imageUrl)
-    ? task.imageUrl.length
-    : 0,
-
-First_Image:
-  Array.isArray(task.imageUrl) && task.imageUrl.length > 0
-    ? task.imageUrl[0]
-    : ""
-
-}));
-
-  const worksheet = XLSX.utils.json_to_sheet(exportData);
-
-  const workbook = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(
-    workbook,
-    worksheet,
-    "Tasks"
-  );
-
-  const excelBuffer = XLSX.write(workbook, {
-    bookType: "xlsx",
-    type: "array"
-  });
-
-  const data = new Blob(
-    [excelBuffer],
-    {
-      type:
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    if (tasks.length === 0) {
+      alert("No tasks available");
+      return;
     }
-  );
 
-  saveAs(
-    data,
-    `ProjectTracker_${
-      new Date()
-        .toISOString()
-        .split("T")[0]
-    }.xlsx`
-  );
+    const workbook = new ExcelJS.Workbook();
+
+    // =====================================
+    // SHEET 1 - SUMMARY
+    // =====================================
+
+    const summarySheet =
+      workbook.addWorksheet("Summary");
+
+    summarySheet.columns = [
+      { width: 35 },
+      { width: 20 }
+    ];
+
+    summarySheet.addRows([
+      ["Total Tasks", tasks.length],
+      [
+        "Completed",
+        tasks.filter(
+          t => t.status === "Completed"
+        ).length
+      ],
+      [
+        "In Progress",
+        tasks.filter(
+          t => t.status === "In Progress"
+        ).length
+      ],
+      [
+        "Open",
+        tasks.filter(
+          t => t.status === "Open"
+        ).length
+      ],
+      [
+        "Critical",
+        tasks.filter(
+          t => t.isCritical
+        ).length
+      ],
+      [
+        "Generated",
+        new Date().toLocaleString()
+      ]
+    ]);
+
+    summarySheet.getColumn(1).font = {
+      bold: true
+    };
+
+    // =====================================
+    // SHEET 2 - TASK REPORT
+    // =====================================
+
+    const taskSheet =
+      workbook.addWorksheet(
+        "Task Report"
+      );
+
+    taskSheet.columns = [
+      {
+        header: "Image 1",
+        width: 18
+      },
+      {
+        header: "Image 2",
+        width: 18
+      },
+      {
+        header: "Image 3",
+        width: 18
+      },
+      {
+        header: "Image 4",
+        width: 18
+      },
+      {
+        header: "Image 5",
+        width: 18
+      },
+
+      {
+        header: "Title",
+        key: "title",
+        width: 25
+      },
+
+      {
+        header: "Description",
+        key: "description",
+        width: 40
+      },
+
+      {
+        header: "Status",
+        key: "status",
+        width: 15
+      },
+
+      {
+        header: "Critical",
+        key: "critical",
+        width: 12
+      },
+
+      {
+        header: "Responsible",
+        key: "responsible",
+        width: 20
+      },
+
+      {
+        header: "Area",
+        key: "area",
+        width: 15
+      },
+
+      {
+        header: "Floor",
+        key: "floor",
+        width: 12
+      },
+
+      {
+        header: "Room",
+        key: "room",
+        width: 12
+      },
+
+      {
+        header: "Date",
+        key: "date",
+        width: 16
+      }
+    ];
+
+    taskSheet.getRow(1).font = {
+      bold: true
+    };
+
+    for (const task of tasks) {
+
+      const imageList =
+        Array.isArray(task.imageUrl)
+          ? task.imageUrl
+          : Array.isArray(task.images)
+          ? task.images
+          : task.imageUrl
+          ? [task.imageUrl]
+          : [];
+
+      const row =
+        taskSheet.addRow({
+          title: task.title || "",
+          description:
+            task.description || "",
+          status: task.status || "",
+          critical:
+            task.isCritical
+              ? "Yes"
+              : "No",
+          responsible:
+            task.responsible || "",
+          area: task.area || "",
+          floor: task.floor || "",
+          room: task.roomNo || "",
+          date: task.addDate
+            ? new Date(
+                task.addDate
+              ).toLocaleDateString()
+            : ""
+        });
+
+      row.height = 70;
+
+      for (
+        let i = 0;
+        i < Math.min(
+          imageList.length,
+          5
+        );
+        i++
+      ) {
+
+        const imageData =
+          await getBase64Image(
+            imageList[i]
+          );
+
+        if (!imageData)
+          continue;
+
+        const extension =
+          imageList[i]
+            .toLowerCase()
+            .includes(".png")
+            ? "png"
+            : "jpeg";
+
+        const imageId =
+          workbook.addImage({
+            base64:
+              imageData,
+            extension
+          });
+
+        taskSheet.addImage(
+          imageId,
+          {
+            tl: {
+              col: i,
+              row:
+                row.number - 1
+            },
+            ext: {
+              width: 80,
+              height: 80
+            }
+          }
+        );
+      }
+    }
+
+    // =====================================
+    // SHEET 3 - CRITICAL TASKS
+    // =====================================
+
+    const criticalSheet =
+      workbook.addWorksheet(
+        "Critical Tasks"
+      );
+
+    criticalSheet.columns = [
+      {
+        header: "Title",
+        key: "title",
+        width: 30
+      },
+      {
+        header: "Description",
+        key: "description",
+        width: 40
+      },
+      {
+        header: "Status",
+        key: "status",
+        width: 15
+      },
+      {
+        header: "Responsible",
+        key: "responsible",
+        width: 20
+      },
+      {
+        header: "Area",
+        key: "area",
+        width: 15
+      },
+      {
+        header: "Room",
+        key: "room",
+        width: 12
+      }
+    ];
+
+    criticalSheet.getRow(1).font = {
+      bold: true
+    };
+
+    tasks
+      .filter(
+        task => task.isCritical
+      )
+      .forEach(task => {
+
+        criticalSheet.addRow({
+          title: task.title,
+          description:
+            task.description,
+          status: task.status,
+          responsible:
+            task.responsible,
+          area: task.area,
+          room: task.roomNo
+        });
+
+      });
+
+    const buffer =
+      await workbook.xlsx.writeBuffer();
+
+    saveAs(
+      new Blob([buffer]),
+      `ProjectTracker_${
+        new Date()
+          .toISOString()
+          .split("T")[0]
+      }.xlsx`
+    );
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert(
+      "Error generating report"
+    );
+
+  }
 };
   const chartData = {
     labels: ["Completed", "In Progress", "Open"],
