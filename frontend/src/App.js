@@ -16,6 +16,8 @@ import AdminPanel from './AdminPanel';
 import LandingPage from "./LandingPage";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import './App.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -130,6 +132,7 @@ function App() {
     return null;
   }
 };
+
 const exportToExcel = async () => {
   try {
 
@@ -448,6 +451,222 @@ const exportToExcel = async () => {
 
   }
 };
+
+const exportToPDF = async () => {
+  try {
+
+    const doc = new jsPDF("p", "mm", "a4");
+
+    let y = 20;
+
+    const completed =
+      tasks.filter(
+        t => t.status === "Completed"
+      ).length;
+
+    const inProgress =
+      tasks.filter(
+        t => t.status === "In Progress"
+      ).length;
+
+    const open =
+      tasks.filter(
+        t => t.status === "Open"
+      ).length;
+
+    const critical =
+      tasks.filter(
+        t => t.isCritical
+      ).length;
+
+    // =================
+    // COVER PAGE
+    // =================
+
+    doc.setFontSize(20);
+
+    doc.text(
+      "Project Tracker Report",
+      15,
+      y
+    );
+
+    y += 10;
+
+    doc.setFontSize(10);
+
+    doc.text(
+      `Generated: ${new Date().toLocaleString()}`,
+      15,
+      y
+    );
+
+    y += 20;
+
+    autoTable(doc, {
+      startY: y,
+      head: [["Metric", "Value"]],
+      body: [
+        ["Total Tasks", tasks.length],
+        ["Completed", completed],
+        ["In Progress", inProgress],
+        ["Open", open],
+        ["Critical", critical],
+        [
+          "Completion %",
+          tasks.length
+            ? `${Math.round(
+                (completed / tasks.length) * 100
+              )}%`
+            : "0%"
+        ]
+      ]
+    });
+
+    // =================
+    // CRITICAL TASKS
+    // =================
+
+    const criticalTasks =
+      tasks.filter(
+        t => t.isCritical
+      );
+
+    if (criticalTasks.length) {
+
+      doc.addPage();
+
+      doc.setFontSize(16);
+
+      doc.text(
+        "Critical Tasks",
+        15,
+        20
+      );
+
+      let currentY = 30;
+
+      for (const task of criticalTasks) {
+
+        doc.setFontSize(12);
+
+        doc.text(
+          task.title || "",
+          15,
+          currentY
+        );
+
+        currentY += 6;
+
+        doc.setFontSize(9);
+
+        doc.text(
+          `Status: ${task.status || ""}`,
+          15,
+          currentY
+        );
+
+        currentY += 5;
+
+        doc.text(
+          `Responsible: ${
+            task.responsible || ""
+          }`,
+          15,
+          currentY
+        );
+
+        currentY += 5;
+
+        const images =
+          Array.isArray(task.imageUrl)
+            ? task.imageUrl
+            : Array.isArray(task.images)
+            ? task.images
+            : task.imageUrl
+            ? [task.imageUrl]
+            : [];
+
+        let imageX = 15;
+
+        for (
+          let i = 0;
+          i < Math.min(images.length, 5);
+          i++
+        ) {
+
+          const image =
+            await getBase64Image(
+              images[i]
+            );
+
+          if (!image) continue;
+
+          doc.addImage(
+            image,
+            "JPEG",
+            imageX,
+            currentY,
+            25,
+            25
+          );
+
+          imageX += 28;
+        }
+
+        currentY += 35;
+
+        if (currentY > 250) {
+          doc.addPage();
+          currentY = 20;
+        }
+      }
+    }
+
+    // =================
+    // TASK TABLE
+    // =================
+
+    doc.addPage();
+
+    autoTable(doc, {
+      startY: 20,
+      head: [[
+        "Title",
+        "Status",
+        "Critical",
+        "Area",
+        "Room"
+      ]],
+      body: tasks.map(task => [
+        task.title || "",
+        task.status || "",
+        task.isCritical
+          ? "Yes"
+          : "No",
+        task.area || "",
+        task.roomNo || ""
+      ])
+    });
+
+    doc.save(
+      `ProjectTracker_${
+        new Date()
+          .toISOString()
+          .split("T")[0]
+      }.pdf`
+    );
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert(
+      "PDF generation failed"
+    );
+
+  }
+};
   const chartData = {
     labels: ["Completed", "In Progress", "Open"],
     datasets: [
@@ -524,6 +743,12 @@ const exportToExcel = async () => {
     onClick={exportToExcel}
   >
     📊 Export Excel
+  </button>
+  <button
+    className="export-btn"
+    onClick={exportToPDF}
+  >
+    📄 Export PDF
   </button>
 </div>
 {/* ✅ Sorting Options */}
