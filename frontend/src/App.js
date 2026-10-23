@@ -455,199 +455,296 @@ const exportToExcel = async () => {
 const exportToPDF = async () => {
   try {
 
-    const doc = new jsPDF("p", "mm", "a4");
+    if (tasks.length === 0) {
+      alert("No tasks available");
+      return;
+    }
 
-    let y = 20;
+    const doc = new jsPDF(
+      "p",
+      "mm",
+      "a4"
+    );
 
-    const completed =
+    // ==========================
+    // PAGE 1 SUMMARY
+    // ==========================
+
+    const totalTasks =
+      tasks.length;
+
+    const completedTasks =
       tasks.filter(
         t => t.status === "Completed"
       ).length;
 
-    const inProgress =
-      tasks.filter(
-        t => t.status === "In Progress"
-      ).length;
-
-    const open =
+    const openTasks =
       tasks.filter(
         t => t.status === "Open"
       ).length;
 
-    const critical =
+    const inProgressTasks =
+      tasks.filter(
+        t => t.status === "In Progress"
+      ).length;
+
+    const criticalTasks =
       tasks.filter(
         t => t.isCritical
       ).length;
 
-    // =================
-    // COVER PAGE
-    // =================
-
-    doc.setFontSize(20);
+    doc.setFontSize(22);
 
     doc.text(
-      "Project Tracker Report",
+      "PROJECT TRACKER REPORT",
       15,
-      y
+      25
     );
-
-    y += 10;
 
     doc.setFontSize(10);
 
     doc.text(
       `Generated: ${new Date().toLocaleString()}`,
       15,
-      y
+      35
     );
 
-    y += 20;
+    doc.setFontSize(14);
+
+    doc.text(
+      "Executive Summary",
+      15,
+      50
+    );
 
     autoTable(doc, {
-      startY: y,
+      startY: 55,
       head: [["Metric", "Value"]],
       body: [
-        ["Total Tasks", tasks.length],
-        ["Completed", completed],
-        ["In Progress", inProgress],
-        ["Open", open],
-        ["Critical", critical],
+        ["Total Tasks", totalTasks],
+        ["Completed", completedTasks],
+        ["In Progress", inProgressTasks],
+        ["Open", openTasks],
+        ["Critical Tasks", criticalTasks],
         [
           "Completion %",
-          tasks.length
+          totalTasks
             ? `${Math.round(
-                (completed / tasks.length) * 100
+                (completedTasks /
+                  totalTasks) *
+                  100
               )}%`
             : "0%"
         ]
       ]
     });
 
-    // =================
-    // CRITICAL TASKS
-    // =================
+    // ==========================
+    // TASK PAGES
+    // ==========================
 
-    const criticalTasks =
-      tasks.filter(
-        t => t.isCritical
-      );
-
-    if (criticalTasks.length) {
+    for (const task of tasks) {
 
       doc.addPage();
 
-      doc.setFontSize(16);
+      let y = 20;
 
-      doc.text(
-        "Critical Tasks",
-        15,
-        20
-      );
+      // Critical banner
 
-      let currentY = 30;
+      if (task.isCritical) {
 
-      for (const task of criticalTasks) {
+        doc.setFillColor(
+          220,
+          53,
+          69
+        );
+
+        doc.rect(
+          0,
+          0,
+          210,
+          12,
+          "F"
+        );
+
+        doc.setTextColor(
+          255,
+          255,
+          255
+        );
 
         doc.setFontSize(12);
 
         doc.text(
-          task.title || "",
-          15,
-          currentY
+          "⚠ CRITICAL TASK",
+          10,
+          8
         );
 
-        currentY += 6;
-
-        doc.setFontSize(9);
-
-        doc.text(
-          `Status: ${task.status || ""}`,
-          15,
-          currentY
+        doc.setTextColor(
+          0,
+          0,
+          0
         );
 
-        currentY += 5;
+        y = 20;
+      }
 
-        doc.text(
-          `Responsible: ${
-            task.responsible || ""
-          }`,
-          15,
-          currentY
+      // Title
+
+      doc.setFontSize(18);
+
+      doc.text(
+        task.title || "Untitled Task",
+        15,
+        y
+      );
+
+      y += 10;
+
+      doc.setFontSize(10);
+
+      doc.text(
+        `Status: ${task.status || ""}`,
+        15,
+        y
+      );
+
+      y += 6;
+
+      doc.text(
+        `Responsible: ${task.responsible || ""}`,
+        15,
+        y
+      );
+
+      y += 6;
+
+      doc.text(
+        `Area: ${task.area || ""}`,
+        15,
+        y
+      );
+
+      y += 6;
+
+      doc.text(
+        `Floor: ${task.floor || ""}`,
+        15,
+        y
+      );
+
+      y += 6;
+
+      doc.text(
+        `Room No: ${task.roomNo || ""}`,
+        15,
+        y
+      );
+
+      y += 6;
+
+      doc.text(
+        `Date Added: ${
+          task.addDate
+            ? new Date(
+                task.addDate
+              ).toLocaleDateString()
+            : ""
+        }`,
+        15,
+        y
+      );
+
+      y += 12;
+
+      doc.setFontSize(14);
+
+      doc.text(
+        "Description",
+        15,
+        y
+      );
+
+      y += 8;
+
+      doc.setFontSize(10);
+
+      const description =
+        doc.splitTextToSize(
+          task.description || "",
+          180
         );
 
-        currentY += 5;
+      doc.text(
+        description,
+        15,
+        y
+      );
 
-        const images =
-          Array.isArray(task.imageUrl)
-            ? task.imageUrl
-            : Array.isArray(task.images)
-            ? task.images
-            : task.imageUrl
-            ? [task.imageUrl]
-            : [];
+      y +=
+        description.length * 5 +
+        10;
 
-        let imageX = 15;
+      // ==================
+      // PHOTOS
+      // ==================
 
-        for (
-          let i = 0;
-          i < Math.min(images.length, 5);
-          i++
-        ) {
+      doc.setFontSize(14);
 
-          const image =
-            await getBase64Image(
-              images[i]
-            );
+      doc.text(
+        "Photos",
+        15,
+        y
+      );
 
-          if (!image) continue;
+      y += 8;
 
-          doc.addImage(
-            image,
-            "JPEG",
-            imageX,
-            currentY,
-            25,
-            25
+      const images =
+        Array.isArray(task.imageUrl)
+          ? task.imageUrl
+          : Array.isArray(task.images)
+          ? task.images
+          : task.imageUrl
+          ? [task.imageUrl]
+          : [];
+
+      let imageX = 15;
+      let imageY = y;
+
+      for (
+        let i = 0;
+        i < Math.min(
+          images.length,
+          5
+        );
+        i++
+      ) {
+
+        const image =
+          await getBase64Image(
+            images[i]
           );
 
-          imageX += 28;
-        }
+        if (!image) continue;
 
-        currentY += 35;
+        doc.addImage(
+          image,
+          "JPEG",
+          imageX,
+          imageY,
+          80,
+          60
+        );
 
-        if (currentY > 250) {
-          doc.addPage();
-          currentY = 20;
+        imageX += 90;
+
+        if (imageX > 100) {
+          imageX = 15;
+          imageY += 70;
         }
       }
     }
-
-    // =================
-    // TASK TABLE
-    // =================
-
-    doc.addPage();
-
-    autoTable(doc, {
-      startY: 20,
-      head: [[
-        "Title",
-        "Status",
-        "Critical",
-        "Area",
-        "Room"
-      ]],
-      body: tasks.map(task => [
-        task.title || "",
-        task.status || "",
-        task.isCritical
-          ? "Yes"
-          : "No",
-        task.area || "",
-        task.roomNo || ""
-      ])
-    });
 
     doc.save(
       `ProjectTracker_${
