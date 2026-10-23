@@ -129,20 +129,15 @@ const exportData = tasks.map(task => ({
     : "",
 
   Images_Count:
-    Array.isArray(task.imageUrl)
-      ? task.imageUrl.length
-      : Array.isArray(task.images)
-      ? task.images.length
-      : task.imageUrl
-      ? 1
-      : 0,
+  Array.isArray(task.imageUrl)
+    ? task.imageUrl.length
+    : 0,
 
-  First_Image:
-    Array.isArray(task.imageUrl) && task.imageUrl.length > 0
-      ? task.imageUrl[0]
-      : Array.isArray(task.images) && task.images.length > 0
-      ? task.images[0]
-      : task.imageUrl || ""
+First_Image:
+  Array.isArray(task.imageUrl) && task.imageUrl.length > 0
+    ? task.imageUrl[0]
+    : ""
+
 }));
 
   const worksheet = XLSX.utils.json_to_sheet(exportData);
