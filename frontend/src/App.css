@@ -737,3 +737,20 @@ input:focus, textarea:focus, select:focus {
   background: #1565c0;
 }
 
+.export-container {
+  margin-bottom: 15px;
+}
+
+.export-btn {
+  background: #217346;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.export-btn:hover {
+  background: #1b5e20;
+}

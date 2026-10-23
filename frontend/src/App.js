@@ -14,6 +14,8 @@ import TaskDetails from './TaskDetails';
 import UpdateTask from './UpdateTask';
 import AdminPanel from './AdminPanel';
 import LandingPage from "./LandingPage";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import './App.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -106,7 +108,75 @@ function App() {
     setEndDate("");
     loadAllTasks();
   };
+const exportToExcel = () => {
 
+  if (tasks.length === 0) {
+    alert("No tasks available to export");
+    return;
+  }
+
+const exportData = tasks.map(task => ({
+  Title: task.title || "",
+  Description: task.description || "",
+  Status: task.status || "",
+  Critical: task.isCritical ? "Yes" : "No",
+  Responsible: task.responsible || "",
+  Area: task.area || "",
+  Floor: task.floor || "",
+  Room: task.roomNo || "",
+  Date: task.addDate
+    ? new Date(task.addDate).toLocaleDateString()
+    : "",
+
+  Images_Count:
+    Array.isArray(task.imageUrl)
+      ? task.imageUrl.length
+      : Array.isArray(task.images)
+      ? task.images.length
+      : task.imageUrl
+      ? 1
+      : 0,
+
+  First_Image:
+    Array.isArray(task.imageUrl) && task.imageUrl.length > 0
+      ? task.imageUrl[0]
+      : Array.isArray(task.images) && task.images.length > 0
+      ? task.images[0]
+      : task.imageUrl || ""
+}));
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Tasks"
+  );
+
+  const excelBuffer = XLSX.write(workbook, {
+    bookType: "xlsx",
+    type: "array"
+  });
+
+  const data = new Blob(
+    [excelBuffer],
+    {
+      type:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    }
+  );
+
+  saveAs(
+    data,
+    `ProjectTracker_${
+      new Date()
+        .toISOString()
+        .split("T")[0]
+    }.xlsx`
+  );
+};
   const chartData = {
     labels: ["Completed", "In Progress", "Open"],
     datasets: [
@@ -177,6 +247,14 @@ function App() {
                   <Pie data={chartData} options={{ maintainAspectRatio: false }} />
                 </div>
               </div>
+  <div className="export-container">
+  <button
+    className="export-btn"
+    onClick={exportToExcel}
+  >
+    📊 Export Excel
+  </button>
+</div>
 {/* ✅ Sorting Options */}
 <div className="sort-container">
   <label>Sort by: </label>
