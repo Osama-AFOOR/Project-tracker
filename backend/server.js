@@ -12,6 +12,7 @@ const cloudinary = require("cloudinary").v2;
 
 const User = require("./models/User");
 const Task = require("./models/Task");
+const Resource = require("./models/Resource");
 const UserActivity = require("./models/UserActivity");
 
 // ✅ Configure Cloudinary
@@ -433,7 +434,118 @@ app.delete("/admin/comments/:taskId/:commentId", auth, authorizeRoles("Admin"), 
 
   res.json({ message: "Comment deleted" });
 });
+// --------------------
+// Resource Management
+// --------------------
 
+// Get all resources
+app.get("/resources", auth, async (req, res) => {
+  try {
+    const resources = await Resource.find().sort({ name: 1 });
+    res.json(resources);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to fetch resources",
+      details: err.message
+    });
+  }
+});
+
+// Create resource
+app.post("/resources",
+  auth,
+  authorizeRoles("Admin", "Editor"),
+  async (req, res) => {
+    try {
+      const resource = new Resource(req.body);
+
+      await resource.save();
+
+      await UserActivity.create({
+        userId: req.user.id,
+        action: "add-resource",
+        details: `Added resource ${resource.name}`
+      });
+
+      res.status(201).json(resource);
+
+    } catch (err) {
+      res.status(500).json({
+        error: "Failed to create resource",
+        details: err.message
+      });
+    }
+  }
+);
+
+// Update resource
+app.put("/resources/:id",
+  auth,
+  authorizeRoles("Admin", "Editor"),
+  async (req, res) => {
+    try {
+      const resource = await Resource.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        { new: true }
+      );
+
+      if (!resource) {
+        return res.status(404).json({
+          error: "Resource not found"
+        });
+      }
+
+      await UserActivity.create({
+        userId: req.user.id,
+        action: "edit-resource",
+        details: `Updated resource ${resource.name}`
+      });
+
+      res.json(resource);
+
+    } catch (err) {
+      res.status(500).json({
+        error: "Failed to update resource",
+        details: err.message
+      });
+    }
+  }
+);
+
+// Delete resource
+app.delete("/resources/:id",
+  auth,
+  authorizeRoles("Admin"),
+  async (req, res) => {
+    try {
+      const resource =
+        await Resource.findByIdAndDelete(req.params.id);
+
+      if (!resource) {
+        return res.status(404).json({
+          error: "Resource not found"
+        });
+      }
+
+      await UserActivity.create({
+        userId: req.user.id,
+        action: "delete-resource",
+        details: `Deleted resource ${resource.name}`
+      });
+
+      res.json({
+        message: "Resource deleted"
+      });
+
+    } catch (err) {
+      res.status(500).json({
+        error: "Failed to delete resource",
+        details: err.message
+      });
+    }
+  }
+);
 // --------------------
 // Activities Endpoint
 // --------------------
