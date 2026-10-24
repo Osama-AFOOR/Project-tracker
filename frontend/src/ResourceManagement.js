@@ -38,7 +38,7 @@ export default function ResourceManagement({ token }) {
 
   useEffect(() => {
     loadResources();
-  }, []);
+  }, [token]);
 
   const addResource = async () => {
     try {

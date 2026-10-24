@@ -2,16 +2,26 @@ import React, { useEffect, useState } from "react";
 import ResourceManagement from "./ResourceManagement";
 
 export default function AdministrationCenter({ token }) {
+  const API_BASE =
+    process.env.REACT_APP_API_URL ||
+    "https://project-tracker-production-1803.up.railway.app";
+
   const [users, setUsers] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [comments, setComments] = useState([]);
   const [resources, setResources] = useState([]);
 
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("users");
 
-  const API_BASE =
-    process.env.REACT_APP_API_URL ||
-    "https://project-tracker-production-1803.up.railway.app";
+  const [newUser, setNewUser] = useState({
+    username: "",
+    password: "",
+    role: "Viewer"
+  });
+
+  const [editTask, setEditTask] = useState(null);
+  const [editComment, setEditComment] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -46,15 +56,327 @@ export default function AdministrationCenter({ token }) {
 
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  // ====================
+  // USER MANAGEMENT
+  // ====================
+
+  const addUser = async () => {
+    try {
+
+      const res = await fetch(
+        `${API_BASE}/signup`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+          body: JSON.stringify(newUser)
+        }
+      );
+
+      const data = await res.json();
+
+      alert(
+        data.message ||
+        "User created"
+      );
+
+      setNewUser({
+        username: "",
+        password: "",
+        role: "Viewer"
+      });
+
+      loadData();
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const changeUserRole = async (
+    id,
+    role
+  ) => {
+
+    try {
+
+      const res = await fetch(
+        `${API_BASE}/admin/users/${id}/role`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: token,
+            "Content-Type":
+              "application/json"
+          },
+          body: JSON.stringify({
+            role
+          })
+        }
+      );
+
+      const updatedUser =
+        await res.json();
+
+      setUsers(
+        users.map((user) =>
+          user._id === id
+            ? updatedUser
+            : user
+        )
+      );
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const deleteUser = async (
+    id
+  ) => {
+
+    if (
+      !window.confirm(
+        "Delete user?"
+      )
+    )
+      return;
+
+    try {
+
+      await fetch(
+        `${API_BASE}/admin/users/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization:
+              token
+          }
+        }
+      );
+
+      setUsers(
+        users.filter(
+          (user) =>
+            user._id !== id
+        )
+      );
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // ====================
+  // TASK MANAGEMENT
+  // ====================
+
+  const updateTask =
+    async () => {
+
+      try {
+
+        const res =
+          await fetch(
+            `${API_BASE}/admin/tasks/${editTask._id}`,
+            {
+              method:
+                "PUT",
+
+              headers: {
+                Authorization:
+                  token,
+
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify(
+                  editTask
+                )
+            }
+          );
+
+        const updated =
+          await res.json();
+
+        setTasks(
+          tasks.map(
+            (task) =>
+              task._id ===
+              updated._id
+                ? updated
+                : task
+          )
+        );
+
+        setEditTask(null);
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+  const deleteTask =
+    async (id) => {
+
+      if (
+        !window.confirm(
+          "Delete task?"
+        )
+      )
+        return;
+
+      try {
+
+        await fetch(
+          `${API_BASE}/admin/tasks/${id}`,
+          {
+            method:
+              "DELETE",
+
+            headers: {
+              Authorization:
+                token
+            }
+          }
+        );
+
+        setTasks(
+          tasks.filter(
+            (task) =>
+              task._id !== id
+          )
+        );
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+  // ====================
+  // COMMENT MANAGEMENT
+  // ====================
+
+  const updateComment =
+    async () => {
+
+      try {
+
+        const res =
+          await fetch(
+            `${API_BASE}/admin/comments/${editComment.taskId}/${editComment._id}`,
+            {
+              method:
+                "PUT",
+
+              headers: {
+                Authorization:
+                  token,
+
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify(
+                  editComment
+                )
+            }
+          );
+
+        const updated =
+          await res.json();
+
+        setComments(
+          comments.map(
+            (
+              comment
+            ) =>
+              comment._id ===
+              updated._id
+                ? updated
+                : comment
+          )
+        );
+
+        setEditComment(
+          null
+        );
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+  const deleteComment =
+    async (
+      taskId,
+      commentId
+    ) => {
+
+      if (
+        !window.confirm(
+          "Delete comment?"
+        )
+      )
+        return;
+
+      try {
+
+        await fetch(
+          `${API_BASE}/admin/comments/${taskId}/${commentId}`,
+          {
+            method:
+              "DELETE",
+
+            headers: {
+              Authorization:
+                token
+            }
+          }
+        );
+
+        setComments(
+          comments.filter(
+            (
+              comment
+            ) =>
+              comment._id !==
+              commentId
+          )
+        );
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+  if (loading)
+    return (
+      <p>
+        Loading Administration
+        Center...
+      </p>
+    );
 
   return (
     <div className="admin-center">
 
-      <h2>⚙ Administration Center</h2>
+      <h2>
+        ⚙ Administration
+        Center
+      </h2>
 
-      {/* Summary Cards */}
+      {/* SUMMARY CARDS */}
 
       <div className="admin-cards">
 
@@ -78,20 +400,35 @@ export default function AdministrationCenter({ token }) {
           <p>{resources.length}</p>
         </div>
 
+        <div className="stat-card">
+          <h3>⚠ Critical</h3>
+          <p>
+            {
+              tasks.filter(
+                (task) =>
+                  task.isCritical
+              ).length
+            }
+          </p>
+        </div>
+
       </div>
 
-      {/* Tabs */}
+      {/* TABS */}
 
       <div className="admin-tabs">
 
         <button
           className={
-            activeTab === "users"
+            activeTab ===
+            "users"
               ? "active-tab"
               : ""
           }
           onClick={() =>
-            setActiveTab("users")
+            setActiveTab(
+              "users"
+            )
           }
         >
           Users
@@ -99,12 +436,15 @@ export default function AdministrationCenter({ token }) {
 
         <button
           className={
-            activeTab === "resources"
+            activeTab ===
+            "resources"
               ? "active-tab"
               : ""
           }
           onClick={() =>
-            setActiveTab("resources")
+            setActiveTab(
+              "resources"
+            )
           }
         >
           Resources
@@ -112,12 +452,15 @@ export default function AdministrationCenter({ token }) {
 
         <button
           className={
-            activeTab === "tasks"
+            activeTab ===
+            "tasks"
               ? "active-tab"
               : ""
           }
           onClick={() =>
-            setActiveTab("tasks")
+            setActiveTab(
+              "tasks"
+            )
           }
         >
           Tasks
@@ -125,12 +468,15 @@ export default function AdministrationCenter({ token }) {
 
         <button
           className={
-            activeTab === "comments"
+            activeTab ===
+            "comments"
               ? "active-tab"
               : ""
           }
           onClick={() =>
-            setActiveTab("comments")
+            setActiveTab(
+              "comments"
+            )
           }
         >
           Comments
@@ -138,12 +484,15 @@ export default function AdministrationCenter({ token }) {
 
         <button
           className={
-            activeTab === "reports"
+            activeTab ===
+            "reports"
               ? "active-tab"
               : ""
           }
           onClick={() =>
-            setActiveTab("reports")
+            setActiveTab(
+              "reports"
+            )
           }
         >
           Reports
@@ -156,30 +505,173 @@ export default function AdministrationCenter({ token }) {
       {activeTab === "users" && (
         <div className="admin-section">
 
-          <h3>User Management</h3>
+          <h3>
+            👤 User Management
+          </h3>
+
+          <div className="user-form">
+
+            <input
+              placeholder="Username"
+              value={
+                newUser.username
+              }
+              onChange={(e) =>
+                setNewUser({
+                  ...newUser,
+                  username:
+                    e.target
+                      .value
+                })
+              }
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              value={
+                newUser.password
+              }
+              onChange={(e) =>
+                setNewUser({
+                  ...newUser,
+                  password:
+                    e.target
+                      .value
+                })
+              }
+            />
+
+            <select
+              value={
+                newUser.role
+              }
+              onChange={(e) =>
+                setNewUser({
+                  ...newUser,
+                  role:
+                    e.target
+                      .value
+                })
+              }
+            >
+              <option value="Admin">
+                Admin
+              </option>
+              <option value="Approver">
+                Approver
+              </option>
+              <option value="Editor">
+                Editor
+              </option>
+              <option value="Viewer">
+                Viewer
+              </option>
+            </select>
+
+            <button
+              onClick={addUser}
+            >
+              Add User
+            </button>
+
+          </div>
 
           <table className="admin-table">
+
             <thead>
               <tr>
-                <th>Username</th>
+                <th>
+                  Username
+                </th>
                 <th>Role</th>
+                <th>
+                  Change Role
+                </th>
+                <th>
+                  Delete
+                </th>
               </tr>
             </thead>
 
             <tbody>
-              {users.map((user) => (
-                <tr key={user._id}>
-                  <td>{user.username}</td>
-                  <td>{user.role}</td>
-                </tr>
-              ))}
+
+              {users.map(
+                (user) => (
+                  <tr
+                    key={
+                      user._id
+                    }
+                  >
+                    <td>
+                      {
+                        user.username
+                      }
+                    </td>
+
+                    <td>
+                      {
+                        user.role
+                      }
+                    </td>
+
+                    <td>
+
+                      <select
+                        value={
+                          user.role
+                        }
+                        onChange={(
+                          e
+                        ) =>
+                          changeUserRole(
+                            user._id,
+                            e
+                              .target
+                              .value
+                          )
+                        }
+                      >
+                        <option value="Admin">
+                          Admin
+                        </option>
+                        <option value="Approver">
+                          Approver
+                        </option>
+                        <option value="Editor">
+                          Editor
+                        </option>
+                        <option value="Viewer">
+                          Viewer
+                        </option>
+                      </select>
+
+                    </td>
+
+                    <td>
+
+                      <button
+                        onClick={() =>
+                          deleteUser(
+                            user._id
+                          )
+                        }
+                      >
+                        Delete
+                      </button>
+
+                    </td>
+
+                  </tr>
+                )
+              )}
+
             </tbody>
+
           </table>
 
         </div>
       )}
-
-      {/* RESOURCES */}
 
       {activeTab === "resources" && (
         <ResourceManagement token={token} />
@@ -190,31 +682,116 @@ export default function AdministrationCenter({ token }) {
       {activeTab === "tasks" && (
         <div className="admin-section">
 
-          <h3>Task Management</h3>
+          <h3>📋 Tasks</h3>
 
-          <table className="admin-table">
+          {tasks.map(
+            (task) => (
+              <div
+                key={
+                  task._id
+                }
+                className="admin-item-card"
+              >
 
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Status</th>
-                <th>Area</th>
-              </tr>
-            </thead>
+                {editTask &&
+                editTask._id ===
+                  task._id ? (
+                  <>
+                    <input
+                      value={
+                        editTask.title
+                      }
+                      onChange={(
+                        e
+                      ) =>
+                        setEditTask(
+                          {
+                            ...editTask,
+                            title:
+                              e
+                                .target
+                                .value
+                          }
+                        )
+                      }
+                    />
 
-            <tbody>
+                    <input
+                      value={
+                        editTask.status
+                      }
+                      onChange={(
+                        e
+                      ) =>
+                        setEditTask(
+                          {
+                            ...editTask,
+                            status:
+                              e
+                                .target
+                                .value
+                          }
+                        )
+                      }
+                    />
 
-              {tasks.map((task) => (
-                <tr key={task._id}>
-                  <td>{task.title}</td>
-                  <td>{task.status}</td>
-                  <td>{task.area}</td>
-                </tr>
-              ))}
+                    <button
+                      onClick={
+                        updateTask
+                      }
+                    >
+                      Save
+                    </button>
 
-            </tbody>
+                    <button
+                      onClick={() =>
+                        setEditTask(
+                          null
+                        )
+                      }
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <strong>
+                      {
+                        task.title
+                      }
+                    </strong>
 
-          </table>
+                    <p>
+                      {
+                        task.status
+                      }
+                    </p>
+
+                    <button
+                      onClick={() =>
+                        setEditTask(
+                          task
+                        )
+                      }
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        deleteTask(
+                          task._id
+                        )
+                      }
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+
+              </div>
+            )
+          )}
 
         </div>
       )}
@@ -224,27 +801,96 @@ export default function AdministrationCenter({ token }) {
       {activeTab === "comments" && (
         <div className="admin-section">
 
-          <h3>Comments</h3>
+          <h3>
+            💬 Comments
+          </h3>
 
-          <table className="admin-table">
+          {comments.map(
+            (
+              comment
+            ) => (
+              <div
+                key={
+                  comment._id
+                }
+                className="admin-item-card"
+              >
 
-            <thead>
-              <tr>
-                <th>Comment</th>
-              </tr>
-            </thead>
+                {editComment &&
+                editComment._id ===
+                  comment._id ? (
+                  <>
+                    <input
+                      value={
+                        editComment.text
+                      }
+                      onChange={(
+                        e
+                      ) =>
+                        setEditComment(
+                          {
+                            ...editComment,
+                            text:
+                              e
+                                .target
+                                .value
+                          }
+                        )
+                      }
+                    />
 
-            <tbody>
+                    <button
+                      onClick={
+                        updateComment
+                      }
+                    >
+                      Save
+                    </button>
 
-              {comments.map((comment) => (
-                <tr key={comment._id}>
-                  <td>{comment.text}</td>
-                </tr>
-              ))}
+                    <button
+                      onClick={() =>
+                        setEditComment(
+                          null
+                        )
+                      }
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      {
+                        comment.text
+                      }
+                    </p>
 
-            </tbody>
+                    <button
+                      onClick={() =>
+                        setEditComment(
+                          comment
+                        )
+                      }
+                    >
+                      Edit
+                    </button>
 
-          </table>
+                    <button
+                      onClick={() =>
+                        deleteComment(
+                          comment.taskId,
+                          comment._id
+                        )
+                      }
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+
+              </div>
+            )
+          )}
 
         </div>
       )}
@@ -252,10 +898,11 @@ export default function AdministrationCenter({ token }) {
       {/* REPORTS */}
 
       {activeTab === "reports" && (
-
         <div className="admin-section">
 
-          <h3>📊 Workforce Reports</h3>
+          <h3>
+            📊 Workforce Reports
+          </h3>
 
           <div className="report-grid">
 
