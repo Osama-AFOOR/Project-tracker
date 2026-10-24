@@ -12,7 +12,8 @@ import Login from './Login';
 import AddTask from './AddTask';
 import TaskDetails from './TaskDetails';
 import UpdateTask from './UpdateTask';
-import AdminPanel from './AdminPanel';
+//import AdminPanel from './AdminPanel';
+import AdministrationCenter from "./AdministrationCenter";
 import LandingPage from "./LandingPage";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -992,7 +993,7 @@ const exportToPDF = async () => {
 
           {/* ✅ AdminPanel */}
           {currentPage === "adminPanel" && role === "Admin" && (
-            <AdminPanel token={token} />
+            <AdministrationCenter token={token} />
           )}
 
           {/* ✅ UpdateTask dedicated page */}

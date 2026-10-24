@@ -15,7 +15,7 @@ export default function AdministrationCenter({ token }) {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [token]);
 
   const loadData = async () => {
     try {
