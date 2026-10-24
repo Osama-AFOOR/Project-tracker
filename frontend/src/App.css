@@ -820,3 +820,32 @@ input:focus, textarea:focus, select:focus {
   font-weight: 600;
   box-shadow: 0 2px 10px rgba(0,0,0,.1);
 }
+.resource-page {
+  padding: 20px;
+}
+
+.resource-search {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+}
+
+.resource-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.resource-table th,
+.resource-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+}
+
+.resource-form {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit,minmax(180px,1fr));
+  gap: 12px;
+  margin-bottom: 15px;
+}

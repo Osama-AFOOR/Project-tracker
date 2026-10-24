@@ -1,103 +1,270 @@
-//ResourceManagement.js
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+  useState
+} from "react";
 
 const API_BASE =
   process.env.REACT_APP_API_URL ||
   "https://project-tracker-production-1803.up.railway.app";
 
-export default function ResourceManagement({ token }) {
-  const [resources, setResources] = useState([]);
+const LEVELS = [
+  "Helper",
+  "Technician",
+  "Supervisor",
+  "Engineer",
+  "Site Manager"
+];
 
-  const [form, setForm] = useState({
-    name: "",
-    level: "Technician",
-    trade: "General Works",
-    company: "",
-    phone: "",
-    hireDate: "",
-    releaseDate: ""
-  });
+const TRADES = [
+  "Electrical",
+  "Mechanical",
+  "HVAC",
+  "Plumbing",
+  "Civil",
+  "Painting",
+  "Carpentry",
+  "General Works"
+];
 
-  const loadResources = async () => {
-    try {
-      const res = await fetch(
-        `${API_BASE}/resources`,
-        {
-          headers: {
-            Authorization: token
-          }
-        }
-      );
+export default function ResourceManagement({
+  token
+}) {
 
-      const data = await res.json();
-      setResources(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const [resources, setResources] =
+    useState([]);
+
+  const [searchTerm, setSearchTerm] =
+    useState("");
+
+  const [editingResource,
+    setEditingResource
+  ] = useState(null);
+
+  const [form, setForm] =
+    useState({
+      name: "",
+      level: "Technician",
+      trade: "General Works",
+      company: "",
+      phone: "",
+      hireDate: "",
+      releaseDate: ""
+    });
 
   useEffect(() => {
     loadResources();
-  }, [token]);
+  }, []);
 
-  const addResource = async () => {
-    try {
-      await fetch(
-        `${API_BASE}/resources`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: token,
-            "Content-Type":
-              "application/json"
-          },
-          body: JSON.stringify(form)
-        }
-      );
+  const loadResources =
+    async () => {
+
+      try {
+
+        const res = await fetch(
+          `${API_BASE}/resources`,
+          {
+            headers: {
+              Authorization: token
+            }
+          }
+        );
+
+        const data =
+          await res.json();
+
+        setResources(data);
+
+      } catch (err) {
+
+        console.error(err);
+
+      }
+    };
+
+  const resetForm = () => {
+
+    setForm({
+      name: "",
+      level: "Technician",
+      trade: "General Works",
+      company: "",
+      phone: "",
+      hireDate: "",
+      releaseDate: ""
+    });
+
+    setEditingResource(null);
+
+  };
+
+  const addResource =
+    async () => {
+
+      try {
+
+        await fetch(
+          `${API_BASE}/resources`,
+          {
+            method: "POST",
+            headers: {
+              Authorization:
+                token,
+
+              "Content-Type":
+                "application/json"
+            },
+            body:
+              JSON.stringify(
+                form
+              )
+          }
+        );
+
+        resetForm();
+
+        loadResources();
+
+      } catch (err) {
+
+        console.error(err);
+
+      }
+    };
+
+  const updateResource =
+    async () => {
+
+      try {
+
+        await fetch(
+          `${API_BASE}/resources/${editingResource._id}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization:
+                token,
+
+              "Content-Type":
+                "application/json"
+            },
+            body:
+              JSON.stringify(
+                form
+              )
+          }
+        );
+
+        resetForm();
+
+        loadResources();
+
+      } catch (err) {
+
+        console.error(err);
+
+      }
+    };
+
+  const deleteResource =
+    async (id) => {
+
+      if (
+        !window.confirm(
+          "Delete resource?"
+        )
+      )
+        return;
+
+      try {
+
+        await fetch(
+          `${API_BASE}/resources/${id}`,
+          {
+            method: "DELETE",
+
+            headers: {
+              Authorization:
+                token
+            }
+          }
+        );
+
+        loadResources();
+
+      } catch (err) {
+
+        console.error(err);
+
+      }
+    };
+
+  const editResource =
+    (resource) => {
+
+      setEditingResource(resource);
 
       setForm({
-        name: "",
-        level: "Technician",
-        trade: "General Works",
-        company: "",
-        phone: "",
-        hireDate: "",
-        releaseDate: ""
+        name:
+          resource.name || "",
+
+        level:
+          resource.level ||
+          "Technician",
+
+        trade:
+          resource.trade ||
+          "General Works",
+
+        company:
+          resource.company ||
+          "",
+
+        phone:
+          resource.phone ||
+          "",
+
+        hireDate:
+          resource.hireDate
+            ? resource.hireDate
+                .split("T")[0]
+            : "",
+
+        releaseDate:
+          resource.releaseDate
+            ? resource.releaseDate
+                .split("T")[0]
+            : ""
       });
+    };
 
-      loadResources();
-
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const deleteResource = async (id) => {
-
-    if (
-      !window.confirm(
-        "Delete resource?"
-      )
-    )
-      return;
-
-    await fetch(
-      `${API_BASE}/resources/${id}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: token
-        }
-      }
+  const filteredResources =
+    resources.filter(
+      (resource) =>
+        resource.name
+          ?.toLowerCase()
+          .includes(
+            searchTerm.toLowerCase()
+          ) ||
+        resource.company
+          ?.toLowerCase()
+          .includes(
+            searchTerm.toLowerCase()
+          ) ||
+        resource.trade
+          ?.toLowerCase()
+          .includes(
+            searchTerm.toLowerCase()
+          )
     );
 
-    loadResources();
-  };
-
   return (
-    <div>
+    <div className="resource-page">
 
-      <h2>👷 Resource Management</h2>
+      <h2>
+        👷 Resource Management
+      </h2>
+
+      {/* FORM */}
 
       <div className="resource-form">
 
@@ -107,7 +274,8 @@ export default function ResourceManagement({ token }) {
           onChange={(e) =>
             setForm({
               ...form,
-              name: e.target.value
+              name:
+                e.target.value
             })
           }
         />
@@ -117,15 +285,18 @@ export default function ResourceManagement({ token }) {
           onChange={(e) =>
             setForm({
               ...form,
-              level: e.target.value
+              level:
+                e.target.value
             })
           }
         >
-          <option>Helper</option>
-          <option>Technician</option>
-          <option>Supervisor</option>
-          <option>Engineer</option>
-          <option>Site Manager</option>
+          {LEVELS.map(level => (
+            <option
+              key={level}
+            >
+              {level}
+            </option>
+          ))}
         </select>
 
         <select
@@ -133,18 +304,18 @@ export default function ResourceManagement({ token }) {
           onChange={(e) =>
             setForm({
               ...form,
-              trade: e.target.value
+              trade:
+                e.target.value
             })
           }
         >
-          <option>Electrical</option>
-          <option>Mechanical</option>
-          <option>HVAC</option>
-          <option>Plumbing</option>
-          <option>Civil</option>
-          <option>Painting</option>
-          <option>Carpentry</option>
-          <option>General Works</option>
+          {TRADES.map(trade => (
+            <option
+              key={trade}
+            >
+              {trade}
+            </option>
+          ))}
         </select>
 
         <input
@@ -153,7 +324,8 @@ export default function ResourceManagement({ token }) {
           onChange={(e) =>
             setForm({
               ...form,
-              company: e.target.value
+              company:
+                e.target.value
             })
           }
         />
@@ -164,7 +336,8 @@ export default function ResourceManagement({ token }) {
           onChange={(e) =>
             setForm({
               ...form,
-              phone: e.target.value
+              phone:
+                e.target.value
             })
           }
         />
@@ -175,7 +348,8 @@ export default function ResourceManagement({ token }) {
           onChange={(e) =>
             setForm({
               ...form,
-              hireDate: e.target.value
+              hireDate:
+                e.target.value
             })
           }
         />
@@ -192,48 +366,167 @@ export default function ResourceManagement({ token }) {
           }
         />
 
-        <button onClick={addResource}>
-          Add Resource
-        </button>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          marginBottom: "20px"
+        }}
+      >
+
+        {editingResource ? (
+
+          <>
+            <button
+              onClick={
+                updateResource
+              }
+            >
+              Update Resource
+            </button>
+
+            <button
+              onClick={
+                resetForm
+              }
+            >
+              Cancel
+            </button>
+          </>
+
+        ) : (
+
+          <button
+            onClick={
+              addResource
+            }
+          >
+            Add Resource
+          </button>
+
+        )}
 
       </div>
+
+      {/* SEARCH */}
+
+      <input
+        className="resource-search"
+        placeholder="Search resources..."
+        value={searchTerm}
+        onChange={(e) =>
+          setSearchTerm(
+            e.target.value
+          )
+        }
+      />
+
+      {/* TABLE */}
 
       <table className="resource-table">
 
         <thead>
+
           <tr>
+
             <th>Name</th>
+
             <th>Level</th>
+
             <th>Trade</th>
+
             <th>Company</th>
+
             <th>Phone</th>
-            <th>Action</th>
+
+            <th>Hire Date</th>
+
+            <th>Release Date</th>
+
+            <th>Actions</th>
+
           </tr>
+
         </thead>
 
         <tbody>
 
-          {resources.map((r) => (
-            <tr key={r._id}>
+          {filteredResources.map(
+            (resource) => (
 
-              <td>{r.name}</td>
-              <td>{r.level}</td>
-              <td>{r.trade}</td>
-              <td>{r.company}</td>
-              <td>{r.phone}</td>
+              <tr
+                key={
+                  resource._id
+                }
+              >
 
-              <td>
-                <button
-                  onClick={() =>
-                    deleteResource(r._id)
+                <td>
+                  {resource.name}
+                </td>
+
+                <td>
+                  {resource.level}
+                </td>
+
+                <td>
+                  {resource.trade}
+                </td>
+
+                <td>
+                  {
+                    resource.company
                   }
-                >
-                  Delete
-                </button>
-              </td>
+                </td>
 
-            </tr>
-          ))}
+                <td>
+                  {resource.phone}
+                </td>
+
+                <td>
+                  {resource.hireDate
+                    ? new Date(
+                        resource.hireDate
+                      ).toLocaleDateString()
+                    : ""}
+                </td>
+
+                <td>
+                  {resource.releaseDate
+                    ? new Date(
+                        resource.releaseDate
+                      ).toLocaleDateString()
+                    : ""}
+                </td>
+
+                <td>
+
+                  <button
+                    onClick={() =>
+                      editResource(
+                        resource
+                      )
+                    }
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      deleteResource(
+                        resource._id
+                      )
+                    }
+                  >
+                    Delete
+                  </button>
+
+                </td>
+
+              </tr>
+            )
+          )}
 
         </tbody>
 
