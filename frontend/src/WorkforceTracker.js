@@ -1,271 +1,447 @@
-//File: frontend/src/WorkforceTracker.js
-
 import React, { useEffect, useState } from "react";
 
 const API_BASE =
   process.env.REACT_APP_API_URL ||
-  "https://project-tracker-production-1803.up.railway.app";
+  "http://localhost:5000";
 
 export default function WorkforceTracker({ token }) {
-
   const [resources, setResources] = useState([]);
 
-  const [workRecord, setWorkRecord] = useState({
-    date: "",
-    building: "",
-    area: "",
-    floor: "",
-    roomNo: "",
-    taskTitle: "",
-    taskDescription: "",
-    assignedResources: []
-  });
+  const [saving, setSaving] =
+    useState(false);
+
+  const [record, setRecord] =
+    useState({
+      date: new Date()
+        .toISOString()
+        .split("T")[0],
+
+      building: "",
+      area: "",
+      floor: "",
+      roomNo: "",
+
+      taskTitle: "",
+      taskDescription: "",
+
+      resources: [],
+
+      photos: []
+    });
 
   useEffect(() => {
     loadResources();
   }, []);
 
-  const loadResources = async () => {
-
-    try {
-
-      const res = await fetch(
-        `${API_BASE}/resources`,
-        {
-          headers: {
-            Authorization: token
+  const loadResources =
+    async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE}/resources`,
+          {
+            headers: {
+              Authorization: token
+            }
           }
-        }
-      );
-
-      const data = await res.json();
-
-      setResources(data);
-
-    } catch (err) {
-
-      console.error(err);
-
-    }
-  };
-
-  const handleResourceChange = (id) => {
-
-    let selected =
-      [...workRecord.assignedResources];
-
-    if (selected.includes(id)) {
-
-      selected =
-        selected.filter(
-          r => r !== id
         );
 
-    } else {
+        const data =
+          await res.json();
 
-      selected.push(id);
+        setResources(data);
 
-    }
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-    setWorkRecord({
-      ...workRecord,
-      assignedResources: selected
+  const toggleResource = (
+    resourceId
+  ) => {
+
+    setRecord(prev => {
+
+      const exists =
+        prev.resources.includes(
+          resourceId
+        );
+
+      return {
+        ...prev,
+
+        resources: exists
+          ? prev.resources.filter(
+              x =>
+                x !==
+                resourceId
+            )
+          : [
+              ...prev.resources,
+              resourceId
+            ]
+      };
     });
   };
 
-const saveWorkRecord = async () => {
-  try {
+  const handlePhotoChange =
+    e => {
 
-    const res =
-      await fetch(
-        `${API_BASE}/work-records`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: token,
-            "Content-Type":
-              "application/json"
-          },
-          body: JSON.stringify({
-            date:
-              workRecord.date,
-            building:
-              workRecord.building,
-            area:
-              workRecord.area,
-            floor:
-              workRecord.floor,
-            roomNo:
-              workRecord.roomNo,
-            taskTitle:
-              workRecord.taskTitle,
-            taskDescription:
-              workRecord.taskDescription,
-            resources:
-              workRecord.assignedResources
-          })
-        }
-      );
+      const files =
+        Array.from(
+          e.target.files
+        );
 
-    const data =
-      await res.json();
+      setRecord(prev => ({
+        ...prev,
+        photos: files
+      }));
+    };
 
-    console.log(data);
+  const saveRecord =
+    async () => {
 
-    alert(
-      "Work record saved successfully"
-    );
+      try {
 
-  } catch (err) {
+        setSaving(true);
 
-    console.error(err);
+        console.log(
+          "Future Work Record:",
+          record
+        );
 
-    alert(
-      "Failed to save work record"
-    );
+        alert(
+          "Workforce Tracker V2 Ready.\nBackend API will be connected next."
+        );
 
-  }
-};
+      } catch (err) {
+
+        console.error(err);
+
+      } finally {
+
+        setSaving(false);
+
+      }
+    };
 
   return (
-    <div className="workforce-page">
+    <div
+      style={{
+        padding: "20px"
+      }}
+    >
+      <div
+        style={{
+          background: "#fff",
+          borderRadius: "12px",
+          padding: "25px",
+          boxShadow:
+            "0 2px 10px rgba(0,0,0,.1)"
+        }}
+      >
+        <h2
+          style={{
+            marginTop: 0,
+            color: "#1a3c6e"
+          }}
+        >
+          👷 Workforce Tracker
+        </h2>
 
-      <h2>
-        👷 Workforce Tracker
-      </h2>
-
-      <div className="workforce-form">
-
-        <input
-          type="date"
-          value={workRecord.date}
-          onChange={(e) =>
-            setWorkRecord({
-              ...workRecord,
-              date: e.target.value
-            })
-          }
-        />
-
-        <input
-          placeholder="Building"
-          value={workRecord.building}
-          onChange={(e) =>
-            setWorkRecord({
-              ...workRecord,
-              building: e.target.value
-            })
-          }
-        />
-
-        <input
-          placeholder="Area"
-          value={workRecord.area}
-          onChange={(e) =>
-            setWorkRecord({
-              ...workRecord,
-              area: e.target.value
-            })
-          }
-        />
-
-        <input
-          placeholder="Floor"
-          value={workRecord.floor}
-          onChange={(e) =>
-            setWorkRecord({
-              ...workRecord,
-              floor: e.target.value
-            })
-          }
-        />
-
-        <input
-          placeholder="Room No."
-          value={workRecord.roomNo}
-          onChange={(e) =>
-            setWorkRecord({
-              ...workRecord,
-              roomNo: e.target.value
-            })
-          }
-        />
-
-        <input
-          placeholder="Task Title"
-          value={workRecord.taskTitle}
-          onChange={(e) =>
-            setWorkRecord({
-              ...workRecord,
-              taskTitle: e.target.value
-            })
-          }
-        />
-
-        <textarea
-          placeholder="Task Description"
-          value={workRecord.taskDescription}
-          onChange={(e) =>
-            setWorkRecord({
-              ...workRecord,
-              taskDescription:
-                e.target.value
-            })
-          }
-        />
-
-      </div>
-
-      <h3>
-        Assigned Resources
-      </h3>
-
-      <div className="resource-selection">
-
-        {resources.map((resource) => (
-
-          <label
-            key={resource._id}
-            className="resource-checkbox"
-          >
+        <div
+          style={{
+            display: "grid",
+            gap: "12px",
+            gridTemplateColumns:
+              "repeat(auto-fit,minmax(220px,1fr))"
+          }}
+        >
+          <div>
+            <label>
+              Work Date
+            </label>
 
             <input
-              type="checkbox"
-              checked={
-                workRecord.assignedResources.includes(
-                  resource._id
-                )
-              }
-              onChange={() =>
-                handleResourceChange(
-                  resource._id
-                )
+              type="date"
+              value={record.date}
+              onChange={e =>
+                setRecord({
+                  ...record,
+                  date:
+                    e.target
+                      .value
+                })
               }
             />
+          </div>
 
-            {resource.name}
+          <div>
+            <label>
+              Building
+            </label>
 
-            {" - "}
+            <input
+              value={
+                record.building
+              }
+              placeholder="Building A"
+              onChange={e =>
+                setRecord({
+                  ...record,
+                  building:
+                    e.target
+                      .value
+                })
+              }
+            />
+          </div>
 
-            {resource.level}
+          <div>
+            <label>
+              Area
+            </label>
 
-            {" - "}
+            <input
+              value={
+                record.area
+              }
+              placeholder="Area"
+              onChange={e =>
+                setRecord({
+                  ...record,
+                  area:
+                    e.target
+                      .value
+                })
+              }
+            />
+          </div>
 
-            {resource.trade}
+          <div>
+            <label>
+              Floor
+            </label>
 
+            <input
+              value={
+                record.floor
+              }
+              placeholder="Floor"
+              onChange={e =>
+                setRecord({
+                  ...record,
+                  floor:
+                    e.target
+                      .value
+                })
+              }
+            />
+          </div>
+
+          <div>
+            <label>
+              Room Number
+            </label>
+
+            <input
+              value={
+                record.roomNo
+              }
+              placeholder="Room"
+              onChange={e =>
+                setRecord({
+                  ...record,
+                  roomNo:
+                    e.target
+                      .value
+                })
+              }
+            />
+          </div>
+
+          <div>
+            <label>
+              Task Title
+            </label>
+
+            <input
+              value={
+                record.taskTitle
+              }
+              placeholder="Task Title"
+              onChange={e =>
+                setRecord({
+                  ...record,
+                  taskTitle:
+                    e.target
+                      .value
+                })
+              }
+            />
+          </div>
+        </div>
+
+        <div
+          style={{
+            marginTop: "15px"
+          }}
+        >
+          <label>
+            Work Description
           </label>
 
-        ))}
+          <textarea
+            rows={4}
+            value={
+              record.taskDescription
+            }
+            placeholder="Describe completed work..."
+            onChange={e =>
+              setRecord({
+                ...record,
+                taskDescription:
+                  e.target
+                    .value
+              })
+            }
+          />
+        </div>
 
+        <div
+          style={{
+            marginTop: "25px"
+          }}
+        >
+          <h3>
+            Assigned Resources
+          </h3>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit,minmax(250px,1fr))",
+              gap: "10px"
+            }}
+          >
+            {resources.map(
+              resource => (
+
+                <div
+                  key={
+                    resource._id
+                  }
+                  onClick={() =>
+                    toggleResource(
+                      resource._id
+                    )
+                  }
+                  style={{
+                    border:
+                      record.resources.includes(
+                        resource._id
+                      )
+                        ? "2px solid #1976d2"
+                        : "1px solid #ddd",
+
+                    background:
+                      record.resources.includes(
+                        resource._id
+                      )
+                        ? "#eaf3ff"
+                        : "#fff",
+
+                    cursor:
+                      "pointer",
+
+                    borderRadius:
+                      "8px",
+
+                    padding:
+                      "12px"
+                  }}
+                >
+                  <strong>
+                    {
+                      resource.name
+                    }
+                  </strong>
+
+                  <div>
+                    {
+                      resource.trade
+                    }
+                  </div>
+
+                  <div>
+                    {
+                      resource.level
+                    }
+                  </div>
+
+                  <div>
+                    {
+                      resource.company
+                    }
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+
+        <div
+          style={{
+            marginTop: "25px"
+          }}
+        >
+          <h3>
+            Work Photos
+          </h3>
+
+          <input
+            type="file"
+            multiple
+            onChange={
+              handlePhotoChange
+            }
+          />
+
+          <p>
+            Selected:
+            {" "}
+            {
+              record.photos
+                .length
+            }
+            {" "}
+            file(s)
+          </p>
+        </div>
+
+        <div
+          style={{
+            marginTop: "25px"
+          }}
+        >
+          <button
+            disabled={saving}
+            onClick={
+              saveRecord
+            }
+            style={{
+              padding:
+                "12px 20px",
+              fontSize:
+                "15px"
+            }}
+          >
+            {saving
+              ? "Saving..."
+              : "Save Work Record"}
+          </button>
+        </div>
       </div>
-
-      <button
-        className="save-work-btn"
-        onClick={saveWorkRecord}
-      >
-        Save Work Record
-      </button>
-
     </div>
   );
 }
