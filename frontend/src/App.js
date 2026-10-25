@@ -14,6 +14,7 @@ import TaskDetails from './TaskDetails';
 import UpdateTask from './UpdateTask';
 //import AdminPanel from './AdminPanel';
 import AdministrationCenter from "./AdministrationCenter";
+import WorkforceTracker from "./WorkforceTracker";
 import LandingPage from "./LandingPage";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -799,6 +800,18 @@ const exportToPDF = async () => {
                 Add Task
               </button>
             )}
+
+            {(role === "Admin" || role === "Editor") && (
+              <button
+                onClick={() => {
+                  setCurrentPage("workforce");
+                  setSelectedTaskId(null);
+                }}
+              >
+                Workforce
+              </button>
+            )}
+            
             {role === "Admin" && (
               <button onClick={() => setCurrentPage("adminPanel")}>
                 Admin Panel
@@ -990,7 +1003,12 @@ const exportToPDF = async () => {
               }} 
             />
           )}
-
+          {/* ✅ Workforce managment */}
+          {currentPage === "workforce" && (
+            <WorkforceTracker
+              token={token}
+            />
+          )}
           {/* ✅ AdminPanel */}
           {currentPage === "adminPanel" && role === "Admin" && (
             <AdministrationCenter token={token} />

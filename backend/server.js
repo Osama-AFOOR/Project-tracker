@@ -13,6 +13,7 @@ const cloudinary = require("cloudinary").v2;
 const User = require("./models/User");
 const Task = require("./models/Task");
 const Resource = require("./models/Resource");
+const WorkRecord = require("./models/WorkRecord");
 const UserActivity = require("./models/UserActivity");
 
 // ✅ Configure Cloudinary
@@ -544,6 +545,151 @@ app.delete("/resources/:id",
         details: err.message
       });
     }
+  }
+);
+
+// --------------------
+// Work Records
+// --------------------
+
+// Get all work records
+app.get("/work-records", auth, async (req, res) => {
+  try {
+    const records = await WorkRecord.find()
+      .populate("resources")
+      .populate("createdBy", "username")
+      .sort({ date: -1 });
+
+    res.json(records);
+
+  } catch (err) {
+
+    res.status(500).json({
+      error: "Failed to fetch work records",
+      details: err.message
+    });
+
+  }
+});
+
+// Create work record
+app.post(
+  "/work-records",
+  auth,
+  authorizeRoles("Admin", "Editor"),
+  async (req, res) => {
+
+    try {
+
+      const record =
+        new WorkRecord({
+          ...req.body,
+          createdBy: req.user.id
+        });
+
+      await record.save();
+
+      await UserActivity.create({
+        userId: req.user.id,
+        action: "add-work-record",
+        details: `Created work record "${record.taskTitle}"`
+      });
+
+      res.status(201).json(record);
+
+    } catch (err) {
+
+      res.status(500).json({
+        error: "Failed to create work record",
+        details: err.message
+      });
+
+    }
+
+  }
+);
+
+// Update work record
+app.put(
+  "/work-records/:id",
+  auth,
+  authorizeRoles("Admin", "Editor"),
+  async (req, res) => {
+
+    try {
+
+      const record =
+        await WorkRecord.findByIdAndUpdate(
+          req.params.id,
+          req.body,
+          { new: true }
+        );
+
+      if (!record) {
+        return res.status(404).json({
+          error: "Work record not found"
+        });
+      }
+
+      await UserActivity.create({
+        userId: req.user.id,
+        action: "edit-work-record",
+        details: `Updated work record "${record.taskTitle}"`
+      });
+
+      res.json(record);
+
+    } catch (err) {
+
+      res.status(500).json({
+        error: "Failed to update work record",
+        details: err.message
+      });
+
+    }
+
+  }
+);
+
+// Delete work record
+app.delete(
+  "/work-records/:id",
+  auth,
+  authorizeRoles("Admin"),
+  async (req, res) => {
+
+    try {
+
+      const record =
+        await WorkRecord.findByIdAndDelete(
+          req.params.id
+        );
+
+      if (!record) {
+        return res.status(404).json({
+          error: "Work record not found"
+        });
+      }
+
+      await UserActivity.create({
+        userId: req.user.id,
+        action: "delete-work-record",
+        details: `Deleted work record "${record.taskTitle}"`
+      });
+
+      res.json({
+        message: "Work record deleted"
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        error: "Failed to delete work record",
+        details: err.message
+      });
+
+    }
+
   }
 );
 // --------------------

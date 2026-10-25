@@ -1,3 +1,5 @@
+//File: frontend/src/WorkforceTracker.js
+
 import React, { useEffect, useState } from "react";
 
 const API_BASE =
@@ -71,14 +73,59 @@ export default function WorkforceTracker({ token }) {
     });
   };
 
-  const saveWorkRecord = async () => {
+const saveWorkRecord = async () => {
+  try {
 
-    console.log(workRecord);
+    const res =
+      await fetch(
+        `${API_BASE}/work-records`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: token,
+            "Content-Type":
+              "application/json"
+          },
+          body: JSON.stringify({
+            date:
+              workRecord.date,
+            building:
+              workRecord.building,
+            area:
+              workRecord.area,
+            floor:
+              workRecord.floor,
+            roomNo:
+              workRecord.roomNo,
+            taskTitle:
+              workRecord.taskTitle,
+            taskDescription:
+              workRecord.taskDescription,
+            resources:
+              workRecord.assignedResources
+          })
+        }
+      );
+
+    const data =
+      await res.json();
+
+    console.log(data);
 
     alert(
-      "Workforce record model ready. Backend route comes next."
+      "Work record saved successfully"
     );
-  };
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert(
+      "Failed to save work record"
+    );
+
+  }
+};
 
   return (
     <div className="workforce-page">
