@@ -4,61 +4,80 @@ const API_BASE =
   process.env.REACT_APP_API_URL ||
   "http://localhost:5000";
 
+const OWNERS = [
+  "Owner 1",
+  "Owner 2",
+  "Owner 3"
+];
+
+const STATUS_OPTIONS = [
+  "Ongoing",
+  "Completed",
+  "Blocked"
+];
+
 export default function WorkforceTracker({ token }) {
   const [resources, setResources] = useState([]);
+  const [saving, setSaving] = useState(false);
 
-  const [saving, setSaving] =
-    useState(false);
+  const [record, setRecord] = useState({
+    date: new Date()
+      .toISOString()
+      .split("T")[0],
 
-  const [record, setRecord] =
-    useState({
-      date: new Date()
-        .toISOString()
-        .split("T")[0],
+    owner: "Owner 1",
 
-      building: "",
-      area: "",
-      floor: "",
-      roomNo: "",
+    building: "",
+    area: "",
+    floor: "",
+    roomNo: "",
 
-      taskTitle: "",
-      taskDescription: "",
+    taskTitle: "",
+    taskDescription: "",
 
-      resources: [],
+    resources: [],
 
-      photos: []
-    });
+    activities: [
+      {
+        timeSlot: "",
+        activity: "",
+        discipline: "",
+        progress: 0,
+        status: "Ongoing",
+        comments: "",
+        photos: []
+      }
+    ]
+  });
 
   useEffect(() => {
     loadResources();
   }, []);
 
-  const loadResources =
-    async () => {
-      try {
-        const res = await fetch(
-          `${API_BASE}/resources`,
-          {
-            headers: {
-              Authorization: token
-            }
+  const loadResources = async () => {
+    try {
+      const res = await fetch(
+        `${API_BASE}/resources`,
+        {
+          headers: {
+            Authorization: token
           }
-        );
+        }
+      );
 
-        const data =
-          await res.json();
+      const data = await res.json();
 
-        setResources(data);
+      setResources(
+        Array.isArray(data)
+          ? data
+          : []
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-  const toggleResource = (
-    resourceId
-  ) => {
-
+  const toggleResource = resourceId => {
     setRecord(prev => {
 
       const exists =
@@ -71,9 +90,7 @@ export default function WorkforceTracker({ token }) {
 
         resources: exists
           ? prev.resources.filter(
-              x =>
-                x !==
-                resourceId
+              r => r !== resourceId
             )
           : [
               ...prev.resources,
@@ -83,46 +100,183 @@ export default function WorkforceTracker({ token }) {
     });
   };
 
-  const handlePhotoChange =
-    e => {
+  const addActivity = () => {
+    setRecord(prev => ({
+      ...prev,
 
-      const files =
-        Array.from(
-          e.target.files
+      activities: [
+        ...prev.activities,
+        {
+          timeSlot: "",
+          activity: "",
+          discipline: "",
+          progress: 0,
+          status: "Ongoing",
+          comments: "",
+          photos: []
+        }
+      ]
+    }));
+  };
+
+  const removeActivity = index => {
+
+    if (
+      record.activities.length === 1
+    ) {
+      return;
+    }
+
+    const updated = [
+      ...record.activities
+    ];
+
+    updated.splice(index, 1);
+
+    setRecord({
+      ...record,
+      activities: updated
+    });
+  };
+
+  const updateActivity = (
+    index,
+    field,
+    value
+  ) => {
+
+    const updated = [
+      ...record.activities
+    ];
+
+    updated[index][field] =
+      value;
+
+    setRecord({
+      ...record,
+      activities: updated
+    });
+  };
+
+  const saveRecord = async () => {
+    try {
+
+      setSaving(true);
+
+      const payload = {
+        date: record.date,
+        owner: record.owner,
+
+        building:
+          record.building,
+
+        area:
+          record.area,
+
+        floor:
+          record.floor,
+
+        roomNo:
+          record.roomNo,
+
+        taskTitle:
+          record.taskTitle,
+
+        taskDescription:
+          record.taskDescription,
+
+        resources:
+          record.resources,
+
+        activities:
+          record.activities.map(
+            activity => ({
+              ...activity,
+
+              photos: []
+            })
+          )
+      };
+
+      const res = await fetch(
+        `${API_BASE}/work-records`,
+        {
+          method: "POST",
+
+          headers: {
+            Authorization:
+              token,
+
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify(
+              payload
+            )
+        }
+      );
+
+      const data =
+        await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data.error ||
+            "Failed to save record"
         );
-
-      setRecord(prev => ({
-        ...prev,
-        photos: files
-      }));
-    };
-
-  const saveRecord =
-    async () => {
-
-      try {
-
-        setSaving(true);
-
-        console.log(
-          "Future Work Record:",
-          record
-        );
-
-        alert(
-          "Workforce Tracker V2 Ready.\nBackend API will be connected next."
-        );
-
-      } catch (err) {
-
-        console.error(err);
-
-      } finally {
-
-        setSaving(false);
-
       }
-    };
+
+      alert(
+        "Work record saved successfully."
+      );
+
+      setRecord({
+        date: new Date()
+          .toISOString()
+          .split("T")[0],
+
+        owner: "Owner 1",
+
+        building: "",
+        area: "",
+        floor: "",
+        roomNo: "",
+
+        taskTitle: "",
+        taskDescription: "",
+
+        resources: [],
+
+        activities: [
+          {
+            timeSlot: "",
+            activity: "",
+            discipline: "",
+            progress: 0,
+            status: "Ongoing",
+            comments: "",
+            photos: []
+          }
+        ]
+      });
+
+    } catch (err) {
+
+      console.error(err);
+
+      alert(
+        err.message ||
+          "Failed to save record"
+      );
+
+    } finally {
+
+      setSaving(false);
+
+    }
+  };
 
   return (
     <div
@@ -141,12 +295,14 @@ export default function WorkforceTracker({ token }) {
       >
         <h2
           style={{
-            marginTop: 0,
-            color: "#1a3c6e"
+            color: "#1a3c6e",
+            marginTop: 0
           }}
         >
           👷 Workforce Tracker
         </h2>
+
+        {/* HEADER */}
 
         <div
           style={{
@@ -156,160 +312,363 @@ export default function WorkforceTracker({ token }) {
               "repeat(auto-fit,minmax(220px,1fr))"
           }}
         >
-          <div>
-            <label>
-              Work Date
-            </label>
-
-            <input
-              type="date"
-              value={record.date}
-              onChange={e =>
-                setRecord({
-                  ...record,
-                  date:
-                    e.target
-                      .value
-                })
-              }
-            />
-          </div>
-
-          <div>
-            <label>
-              Building
-            </label>
-
-            <input
-              value={
-                record.building
-              }
-              placeholder="Building A"
-              onChange={e =>
-                setRecord({
-                  ...record,
-                  building:
-                    e.target
-                      .value
-                })
-              }
-            />
-          </div>
-
-          <div>
-            <label>
-              Area
-            </label>
-
-            <input
-              value={
-                record.area
-              }
-              placeholder="Area"
-              onChange={e =>
-                setRecord({
-                  ...record,
-                  area:
-                    e.target
-                      .value
-                })
-              }
-            />
-          </div>
-
-          <div>
-            <label>
-              Floor
-            </label>
-
-            <input
-              value={
-                record.floor
-              }
-              placeholder="Floor"
-              onChange={e =>
-                setRecord({
-                  ...record,
-                  floor:
-                    e.target
-                      .value
-                })
-              }
-            />
-          </div>
-
-          <div>
-            <label>
-              Room Number
-            </label>
-
-            <input
-              value={
-                record.roomNo
-              }
-              placeholder="Room"
-              onChange={e =>
-                setRecord({
-                  ...record,
-                  roomNo:
-                    e.target
-                      .value
-                })
-              }
-            />
-          </div>
-
-          <div>
-            <label>
-              Task Title
-            </label>
-
-            <input
-              value={
-                record.taskTitle
-              }
-              placeholder="Task Title"
-              onChange={e =>
-                setRecord({
-                  ...record,
-                  taskTitle:
-                    e.target
-                      .value
-                })
-              }
-            />
-          </div>
-        </div>
-
-        <div
-          style={{
-            marginTop: "15px"
-          }}
-        >
-          <label>
-            Work Description
-          </label>
-
-          <textarea
-            rows={4}
-            value={
-              record.taskDescription
-            }
-            placeholder="Describe completed work..."
+          <input
+            type="date"
+            value={record.date}
             onChange={e =>
               setRecord({
                 ...record,
-                taskDescription:
-                  e.target
-                    .value
+                date:
+                  e.target.value
+              })
+            }
+          />
+
+          <select
+            value={record.owner}
+            onChange={e =>
+              setRecord({
+                ...record,
+                owner:
+                  e.target.value
+              })
+            }
+          >
+            {OWNERS.map(owner => (
+              <option
+                key={owner}
+                value={owner}
+              >
+                {owner}
+              </option>
+            ))}
+          </select>
+
+          <input
+            placeholder="Building"
+            value={
+              record.building
+            }
+            onChange={e =>
+              setRecord({
+                ...record,
+                building:
+                  e.target.value
+              })
+            }
+          />
+
+          <input
+            placeholder="Area"
+            value={record.area}
+            onChange={e =>
+              setRecord({
+                ...record,
+                area:
+                  e.target.value
+              })
+            }
+          />
+
+          <input
+            placeholder="Floor"
+            value={record.floor}
+            onChange={e =>
+              setRecord({
+                ...record,
+                floor:
+                  e.target.value
+              })
+            }
+          />
+
+          <input
+            placeholder="Room No."
+            value={record.roomNo}
+            onChange={e =>
+              setRecord({
+                ...record,
+                roomNo:
+                  e.target.value
               })
             }
           />
         </div>
 
+        {/* TASK */}
+
+        <div
+          style={{
+            marginTop: "20px"
+          }}
+        >
+          <input
+            style={{
+              width: "100%",
+              marginBottom:
+                "10px"
+            }}
+            placeholder="Task Title"
+            value={
+              record.taskTitle
+            }
+            onChange={e =>
+              setRecord({
+                ...record,
+                taskTitle:
+                  e.target.value
+              })
+            }
+          />
+
+          <textarea
+            rows={4}
+            style={{
+              width: "100%"
+            }}
+            placeholder="Task Description"
+            value={
+              record.taskDescription
+            }
+            onChange={e =>
+              setRecord({
+                ...record,
+                taskDescription:
+                  e.target.value
+              })
+            }
+          />
+        </div>
+
+        {/* ACTIVITIES */}
+
         <div
           style={{
             marginTop: "25px"
+          }}
+        >
+          <h3>
+            Daily Activities
+          </h3>
+
+          {record.activities.map(
+            (
+              activity,
+              index
+            ) => (
+              <div
+                key={index}
+                style={{
+                  border:
+                    "1px solid #ddd",
+
+                  borderRadius:
+                    "10px",
+
+                  padding:
+                    "15px",
+
+                  marginBottom:
+                    "15px",
+
+                  background:
+                    "#fafafa"
+                }}
+              >
+                <h4>
+                  Activity #
+                  {index + 1}
+                </h4>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gap: "10px",
+                    gridTemplateColumns:
+                      "repeat(auto-fit,minmax(220px,1fr))"
+                  }}
+                >
+                  <input
+                    placeholder="Time Slot"
+                    value={
+                      activity.timeSlot
+                    }
+                    onChange={e =>
+                      updateActivity(
+                        index,
+                        "timeSlot",
+                        e.target.value
+                      )
+                    }
+                  />
+
+                  <input
+                    placeholder="Activity"
+                    value={
+                      activity.activity
+                    }
+                    onChange={e =>
+                      updateActivity(
+                        index,
+                        "activity",
+                        e.target.value
+                      )
+                    }
+                  />
+
+                  <input
+                    placeholder="Discipline"
+                    value={
+                      activity.discipline
+                    }
+                    onChange={e =>
+                      updateActivity(
+                        index,
+                        "discipline",
+                        e.target.value
+                      )
+                    }
+                  />
+
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    placeholder="Progress %"
+                    value={
+                      activity.progress
+                    }
+                    onChange={e =>
+                      updateActivity(
+                        index,
+                        "progress",
+                        Number(
+                          e.target.value
+                        )
+                      )
+                    }
+                  />
+
+                  <select
+                    value={
+                      activity.status
+                    }
+                    onChange={e =>
+                      updateActivity(
+                        index,
+                        "status",
+                        e.target.value
+                      )
+                    }
+                  >
+                    {STATUS_OPTIONS.map(
+                      option => (
+                        <option
+                          key={
+                            option
+                          }
+                          value={
+                            option
+                          }
+                        >
+                          {option}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+
+                <textarea
+                  rows={3}
+                  style={{
+                    width: "100%",
+                    marginTop:
+                      "10px"
+                  }}
+                  placeholder="Comments"
+                  value={
+                    activity.comments
+                  }
+                  onChange={e =>
+                    updateActivity(
+                      index,
+                      "comments",
+                      e.target.value
+                    )
+                  }
+                />
+
+                <div
+                  style={{
+                    marginTop:
+                      "10px"
+                  }}
+                >
+                  <label>
+                    Activity Photos
+                  </label>
+
+                  <input
+                    type="file"
+                    multiple
+                    onChange={e =>
+                      updateActivity(
+                        index,
+                        "photos",
+                        Array.from(
+                          e.target
+                            .files
+                        )
+                      )
+                    }
+                  />
+
+                  <div>
+                    Selected:
+                    {" "}
+                    {
+                      activity
+                        .photos
+                        .length
+                    }
+                    {" "}
+                    file(s)
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    removeActivity(
+                      index
+                    )
+                  }
+                  style={{
+                    marginTop:
+                      "10px",
+                    background:
+                      "#dc3545"
+                  }}
+                >
+                  Remove Activity
+                </button>
+              </div>
+            )
+          )}
+
+          <button
+            type="button"
+            onClick={addActivity}
+          >
+            + Add Activity
+          </button>
+        </div>
+
+        {/* RESOURCES */}
+
+        <div
+          style={{
+            marginTop: "30px"
           }}
         >
           <h3>
@@ -326,7 +685,6 @@ export default function WorkforceTracker({ token }) {
           >
             {resources.map(
               resource => (
-
                 <div
                   key={
                     resource._id
@@ -337,6 +695,9 @@ export default function WorkforceTracker({ token }) {
                     )
                   }
                   style={{
+                    cursor:
+                      "pointer",
+
                     border:
                       record.resources.includes(
                         resource._id
@@ -351,14 +712,11 @@ export default function WorkforceTracker({ token }) {
                         ? "#eaf3ff"
                         : "#fff",
 
-                    cursor:
-                      "pointer",
+                    padding:
+                      "12px",
 
                     borderRadius:
-                      "8px",
-
-                    padding:
-                      "12px"
+                      "8px"
                   }}
                 >
                   <strong>
@@ -390,34 +748,7 @@ export default function WorkforceTracker({ token }) {
           </div>
         </div>
 
-        <div
-          style={{
-            marginTop: "25px"
-          }}
-        >
-          <h3>
-            Work Photos
-          </h3>
-
-          <input
-            type="file"
-            multiple
-            onChange={
-              handlePhotoChange
-            }
-          />
-
-          <p>
-            Selected:
-            {" "}
-            {
-              record.photos
-                .length
-            }
-            {" "}
-            file(s)
-          </p>
-        </div>
+        {/* SAVE */}
 
         <div
           style={{
@@ -426,9 +757,7 @@ export default function WorkforceTracker({ token }) {
         >
           <button
             disabled={saving}
-            onClick={
-              saveRecord
-            }
+            onClick={saveRecord}
             style={{
               padding:
                 "12px 20px",
