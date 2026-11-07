@@ -1,5 +1,6 @@
+//frontend/src/WorkforceTracker.js
 import React, { useEffect, useState } from "react";
-
+import WorkRecordHistory from "./WorkRecordHistory";
 const API_BASE =
   process.env.REACT_APP_API_URL ||
   "http://localhost:5000";
@@ -769,8 +770,18 @@ export default function WorkforceTracker({ token }) {
               ? "Saving..."
               : "Save Work Record"}
           </button>
+        <WorkRecordHistory
+  token={token}
+  role={
+    JSON.parse(
+      atob(
+        token.split(".")[1]
+      )
+    ).role
+  }
+/>
         </div>
       </div>
-    </div>
+    </div> 
   );
 }
