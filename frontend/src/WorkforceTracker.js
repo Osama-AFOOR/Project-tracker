@@ -17,6 +17,7 @@ const STATUS_OPTIONS = [
   "Blocked"
 ];
 
+
 export default function WorkforceTracker({ token }) {
   const [resources, setResources] = useState([]);
   const [saving, setSaving] = useState(false);

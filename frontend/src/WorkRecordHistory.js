@@ -7,7 +7,8 @@ const API_BASE =
 export default function WorkRecordHistory({
   token,
   role,
-  refreshKey = 0
+  refreshKey = 0,
+  onEditRecord
 }) {
   const [records, setRecords] =
     useState([]);
@@ -434,14 +435,21 @@ export default function WorkRecordHistory({
                   }}
                 >
                   <button
-                    onClick={() =>
-                      setSelectedRecord(
-                        record
-                      )
-                    }
-                  >
-                    View
-                  </button>
+                onClick={() =>
+                    setSelectedRecord(record)
+                }
+                >
+                View
+                </button>
+
+                <button
+                onClick={() =>
+                    onEditRecord &&
+                    onEditRecord(record)
+                }
+                >
+                Edit
+                </button>
 
                   {role ===
                     "Admin" && (
