@@ -43,7 +43,8 @@ export default function WorkforceTracker({ token }) {
 
     activities: [
       {
-        timeSlot: "",
+        fromTime: "",
+        toTime: "",
         activity: "",
         discipline: "",
         progress: 0,
@@ -111,7 +112,8 @@ export default function WorkforceTracker({ token }) {
       activities: [
         ...prev.activities,
         {
-          timeSlot: "",
+          fromTime: "",
+          toTime: "",
           activity: "",
           discipline: "",
           resources: [],
@@ -319,7 +321,8 @@ export default function WorkforceTracker({ token }) {
 
         activities: [
           {
-            timeSlot: "",
+            fromTime: "",
+            toTime: "",
             activity: "",
             discipline: "",
             resources: [],
@@ -557,19 +560,33 @@ export default function WorkforceTracker({ token }) {
                       "repeat(auto-fit,minmax(220px,1fr))"
                   }}
                 >
-                  <input
-                    placeholder="Time Slot"
-                    value={
-                      activity.timeSlot
-                    }
-                    onChange={e =>
-                      updateActivity(
-                        index,
-                        "timeSlot",
-                        e.target.value
-                      )
-                    }
-                  />
+                <input
+                  type="time"
+                  value={
+                    activity.fromTime || ""
+                  }
+                  onChange={e =>
+                    updateActivity(
+                      index,
+                      "fromTime",
+                      e.target.value
+                    )
+                  }
+                />
+
+                <input
+                  type="time"
+                  value={
+                    activity.toTime || ""
+                  }
+                  onChange={e =>
+                    updateActivity(
+                      index,
+                      "toTime",
+                      e.target.value
+                    )
+                  }
+                />
 
                   <input
                     placeholder="Activity"
@@ -669,6 +686,76 @@ export default function WorkforceTracker({ token }) {
 
                 <div
                   style={{
+                    marginTop: "15px"
+                  }}
+                >
+                  <h4>
+                    Assigned Resources
+                  </h4>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fit,minmax(220px,1fr))",
+                      gap: "10px"
+                    }}
+                  >
+                    {resources.map(resource => (
+
+                      <div
+                        key={resource._id}
+                        onClick={() =>
+                          toggleActivityResource(
+                            index,
+                            resource._id
+                          )
+                        }
+                        style={{
+                          cursor: "pointer",
+
+                          border:
+                            (
+                              activity.resources || []
+                            ).includes(
+                              resource._id
+                            )
+                              ? "2px solid #1976d2"
+                              : "1px solid #ddd",
+
+                          background:
+                            (
+                              activity.resources || []
+                            ).includes(
+                              resource._id
+                            )
+                              ? "#eaf3ff"
+                              : "#fff",
+
+                          padding: "10px",
+
+                          borderRadius: "8px"
+                        }}
+                      >
+                        <strong>
+                          {resource.name}
+                        </strong>
+
+                        <div>
+                          {resource.trade}
+                        </div>
+
+                        <div>
+                          {resource.company}
+                        </div>
+                      </div>
+
+                    ))}
+                  </div>
+                </div>
+
+                <div
+                  style={{
                     marginTop:
                       "10px"
                   }}
@@ -755,90 +842,6 @@ export default function WorkforceTracker({ token }) {
           >
             + Add Activity
           </button>
-        </div>
-
-        {/* RESOURCES */}
-
-        <div
-          style={{
-            marginTop: "30px"
-          }}
-        >
-          <h3>
-            Assigned Resources
-          </h3>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit,minmax(250px,1fr))",
-              gap: "10px"
-            }}
-          >
-            {resources.map(
-              resource => (
-                <div
-                  key={
-                    resource._id
-                  }
-                  onClick={() =>
-                    toggleResource(
-                      resource._id
-                    )
-                  }
-                  style={{
-                    cursor:
-                      "pointer",
-
-                    border:
-                      record.resources.includes(
-                        resource._id
-                      )
-                        ? "2px solid #1976d2"
-                        : "1px solid #ddd",
-
-                    background:
-                      record.resources.includes(
-                        resource._id
-                      )
-                        ? "#eaf3ff"
-                        : "#fff",
-
-                    padding:
-                      "12px",
-
-                    borderRadius:
-                      "8px"
-                  }}
-                >
-                  <strong>
-                    {
-                      resource.name
-                    }
-                  </strong>
-
-                  <div>
-                    {
-                      resource.trade
-                    }
-                  </div>
-
-                  <div>
-                    {
-                      resource.level
-                    }
-                  </div>
-
-                  <div>
-                    {
-                      resource.company
-                    }
-                  </div>
-                </div>
-              )
-            )}
-          </div>
         </div>
 
         {/* SAVE */}
