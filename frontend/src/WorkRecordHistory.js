@@ -593,14 +593,47 @@ export default function WorkRecordHistory({
                   }}
                 >
                   <p>
-                    <strong>
-                      Time:
-                    </strong>
-                    {" "}
-                    {
-                      activity.timeSlot
-                    }
-                  </p>
+                  <strong>
+                    Time:
+                  </strong>
+                  {" "}
+                  {activity.fromTime}
+                  {" → "}
+                  {activity.toTime}
+                </p>
+                <p>
+                <strong>
+                  Resources:
+                </strong>
+              </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "6px",
+                  marginBottom: "10px"
+                }}
+              >
+                {(activity.resources || []).map(
+                  (resource, index) => (
+                    <span
+                      key={index}
+                      style={{
+                        background: "#eaf3ff",
+                        color: "#1976d2",
+                        padding: "4px 10px",
+                        borderRadius: "20px",
+                        fontSize: "12px",
+                        fontWeight: "600"
+                      }}
+                    >
+                      {resource.name || resource}
+                    </span>
+                  )
+                )}
+              </div>
+
 
                   <p>
                     <strong>

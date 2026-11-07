@@ -5,11 +5,15 @@ const mongoose = require("mongoose");
 const activitySchema =
   new mongoose.Schema(
     {
-      timeSlot: {
+      fromTime: {
         type: String,
         default: ""
       },
 
+      toTime: {
+        type: String,
+        default: ""
+      },
       activity: {
         type: String,
         required: true
@@ -19,6 +23,13 @@ const activitySchema =
         type: String,
         default: ""
       },
+      resources: [
+  {
+    type:
+      mongoose.Schema.Types.ObjectId,
+    ref: "Resource"
+  }
+],
 
       progress: {
         type: Number,
@@ -94,13 +105,7 @@ const workRecordSchema =
         default: ""
       },
 
-      resources: [
-        {
-          type:
-            mongoose.Schema.Types.ObjectId,
-          ref: "Resource"
-        }
-      ],
+
 
       activities: [
         activitySchema

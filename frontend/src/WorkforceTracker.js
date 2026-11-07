@@ -114,6 +114,7 @@ export default function WorkforceTracker({ token }) {
           timeSlot: "",
           activity: "",
           discipline: "",
+          resources: [],
           progress: 0,
           status: "Ongoing",
           comments: "",
@@ -161,7 +162,43 @@ export default function WorkforceTracker({ token }) {
       activities: updated
     });
   };
-      const uploadImage = async file => {
+      
+  const toggleActivityResource = (
+  activityIndex,
+  resourceId
+) => {
+
+  const updated = [
+    ...record.activities
+  ];
+
+  const resources =
+    updated[activityIndex]
+      .resources || [];
+
+  const exists =
+    resources.includes(
+      resourceId
+    );
+
+  updated[activityIndex]
+    .resources = exists
+      ? resources.filter(
+          r => r !== resourceId
+        )
+      : [
+          ...resources,
+          resourceId
+        ];
+
+  setRecord({
+    ...record,
+    activities: updated
+  });
+
+};
+  
+  const uploadImage = async file => {
         const formData = new FormData();
 
         formData.append(
@@ -285,6 +322,7 @@ export default function WorkforceTracker({ token }) {
             timeSlot: "",
             activity: "",
             discipline: "",
+            resources: [],
             progress: 0,
             status: "Ongoing",
             comments: "",
