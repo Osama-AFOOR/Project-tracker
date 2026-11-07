@@ -21,6 +21,8 @@ const STATUS_OPTIONS = [
 export default function WorkforceTracker({ token }) {
   const [resources, setResources] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [record, setRecord] = useState({
     date: new Date()
@@ -200,10 +202,18 @@ export default function WorkforceTracker({ token }) {
           )
       };
 
-      const res = await fetch(
-        `${API_BASE}/work-records`,
-        {
-          method: "POST",
+        const url = editingId
+          ? `${API_BASE}/work-records/${editingId}`
+          : `${API_BASE}/work-records`;
+
+        const method = editingId
+          ? "PUT"
+          : "POST";
+
+        const res = await fetch(
+          url,
+          {
+            method,
 
           headers: {
             Authorization:
@@ -230,9 +240,14 @@ export default function WorkforceTracker({ token }) {
         );
       }
 
-      alert(
-        "Work record saved successfully."
-      );
+        alert(
+          editingId
+            ? "Work record updated successfully."
+            : "Work record saved successfully."
+        );
+
+        setEditingId(null);
+        setRefreshKey(prev => prev + 1);
 
       setRecord({
         date: new Date()
@@ -767,12 +782,15 @@ export default function WorkforceTracker({ token }) {
                 "15px"
             }}
           >
-            {saving
-              ? "Saving..."
-              : "Save Work Record"}
+          {saving
+            ? "Saving..."
+            : editingId
+            ? "Update Work Record"
+            : "Save Work Record"}
           </button>
-        <WorkRecordHistory
+<WorkRecordHistory
   token={token}
+  refreshKey={refreshKey}
   role={
     JSON.parse(
       atob(
@@ -780,6 +798,66 @@ export default function WorkforceTracker({ token }) {
       )
     ).role
   }
+  onEditRecord={record => {
+    setEditingId(record._id);
+
+    setRecord({
+      date: record.date
+        ? new Date(record.date)
+            .toISOString()
+            .split("T")[0]
+        : "",
+
+      owner:
+        record.owner ||
+        "Owner 1",
+
+      building:
+        record.building || "",
+
+      area:
+        record.area || "",
+
+      floor:
+        record.floor || "",
+
+      roomNo:
+        record.roomNo || "",
+
+      taskTitle:
+        record.taskTitle || "",
+
+      taskDescription:
+        record.taskDescription || "",
+
+      resources:
+        (
+          record.resources || []
+        ).map(
+          r => r._id || r
+        ),
+
+      activities:
+        record.activities?.length
+          ? record.activities
+          : [
+              {
+                timeSlot: "",
+                activity: "",
+                discipline: "",
+                progress: 0,
+                status: "Ongoing",
+                comments: "",
+                photos: []
+              }
+            ]
+    });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }}
 />
         </div>
       </div>
