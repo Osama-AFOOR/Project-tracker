@@ -615,8 +615,9 @@ export default function WorkRecordHistory({
                   marginBottom: "10px"
                 }}
               >
-                {(activity.resources || []).map(
-                  (resource, index) => (
+                {Array.isArray(activity.resources) &&
+                  activity.resources.map(
+                    (resource, index) => (
                     <span
                       key={index}
                       style={{
