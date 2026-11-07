@@ -642,6 +642,56 @@ export default function WorkRecordHistory({
                       activity.comments
                     }
                   </p>
+                  {activity.photos?.length > 0 && (
+  <>
+    <p>
+      <strong>
+        Photos
+      </strong>
+    </p>
+
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: "10px"
+      }}
+    >
+      {activity.photos.map(
+        (
+          photo,
+          photoIndex
+        ) => (
+          <img
+            key={
+              photoIndex
+            }
+            src={photo}
+            alt="Activity"
+            style={{
+              width:
+                "120px",
+              height:
+                "120px",
+              objectFit:
+                "cover",
+              borderRadius:
+                "8px",
+              cursor:
+                "pointer"
+            }}
+            onClick={() =>
+              window.open(
+                photo,
+                "_blank"
+              )
+            }
+          />
+        )
+      )}
+    </div>
+  </>
+)}
                 </div>
               )
             )}

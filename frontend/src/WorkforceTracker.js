@@ -161,7 +161,27 @@ export default function WorkforceTracker({ token }) {
       activities: updated
     });
   };
+      const uploadImage = async file => {
+        const formData = new FormData();
 
+        formData.append(
+          "image",
+          file
+        );
+
+        const response = await fetch(
+          `${API_BASE}/upload`,
+          {
+            method: "POST",
+            body: formData
+          }
+        );
+
+      const data =
+        await response.json();
+
+      return data.url;
+    };
   const saveRecord = async () => {
     try {
 
@@ -193,13 +213,7 @@ export default function WorkforceTracker({ token }) {
           record.resources,
 
         activities:
-          record.activities.map(
-            activity => ({
-              ...activity,
-
-              photos: []
-            })
-          )
+        record.activities
       };
 
         const url = editingId
@@ -625,20 +639,44 @@ export default function WorkforceTracker({ token }) {
                     Activity Photos
                   </label>
 
-                  <input
-                    type="file"
-                    multiple
-                    onChange={e =>
-                      updateActivity(
-                        index,
-                        "photos",
-                        Array.from(
-                          e.target
-                            .files
-                        )
-                      )
-                    }
-                  />
+<input
+  type="file"
+  multiple
+  onChange={async e => {
+
+    const files =
+      Array.from(
+        e.target.files
+      );
+
+    try {
+
+      const urls =
+        await Promise.all(
+          files.map(file =>
+            uploadImage(file)
+          )
+        );
+
+      updateActivity(
+        index,
+        "photos",
+        urls
+      );
+
+    } catch (err) {
+
+      console.error(err);
+
+      alert(
+        "Image upload failed"
+      );
+
+    }
+
+  }}
+/>
+
 
                   <div>
                     Selected:
