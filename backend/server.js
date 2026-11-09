@@ -556,9 +556,12 @@ app.delete("/resources/:id",
 app.get("/work-records", auth, async (req, res) => {
   try {
     const records = await WorkRecord.find()
-      .populate("resources")
-      .populate("createdBy", "username")
-      .sort({ date: -1 });
+  .populate({
+    path: "activities.resources",
+    model: "Resource"
+  })
+  .populate("createdBy", "username")
+  .sort({ date: -1 });
 
     res.json(records);
 
