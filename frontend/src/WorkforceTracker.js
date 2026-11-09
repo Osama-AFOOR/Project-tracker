@@ -1,6 +1,5 @@
 //frontend/src/WorkforceTracker.js
 import React, { useEffect, useState } from "react";
-import WorkRecordHistory from "./WorkRecordHistory";
 const API_BASE =
   process.env.REACT_APP_API_URL ||
   "http://localhost:5000";
@@ -867,77 +866,7 @@ export default function WorkforceTracker({ token }) {
             ? "Update Work Record"
             : "Save Work Record"}
           </button>
-<WorkRecordHistory
-  token={token}
-  refreshKey={refreshKey}
-  role={
-    JSON.parse(
-      atob(
-        token.split(".")[1]
-      )
-    ).role
-  }
-  onEditRecord={record => {
-    setEditingId(record._id);
 
-    setRecord({
-      date: record.date
-        ? new Date(record.date)
-            .toISOString()
-            .split("T")[0]
-        : "",
-
-      owner:
-        record.owner ||
-        "Owner 1",
-
-      building:
-        record.building || "",
-
-      area:
-        record.area || "",
-
-      floor:
-        record.floor || "",
-
-      roomNo:
-        record.roomNo || "",
-
-      taskTitle:
-        record.taskTitle || "",
-
-      taskDescription:
-        record.taskDescription || "",
-
-      resources:
-        (
-          record.resources || []
-        ).map(
-          r => r._id || r
-        ),
-
-      activities:
-        record.activities?.length
-          ? record.activities
-          : [
-              {
-                timeSlot: "",
-                activity: "",
-                discipline: "",
-                progress: 0,
-                status: "Ongoing",
-                comments: "",
-                photos: []
-              }
-            ]
-    });
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-  }}
-/>
         </div>
       </div>
     </div> 
