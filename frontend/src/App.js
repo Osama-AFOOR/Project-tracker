@@ -21,6 +21,9 @@ import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import './App.css';
+import WorkforceManagement from "./WorkforceManagement";
+
+import WorkRecordHistory from "./WorkRecordHistory";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -1007,6 +1010,22 @@ const exportToPDF = async () => {
           {currentPage === "workforce" && (
             <WorkforceTracker
               token={token}
+            />
+          )}
+           {/* ✅ Workforce managment */}
+            {currentPage === "workforceManagement" && (
+          <WorkforceManagement
+            setCurrentPage={
+              setCurrentPage
+            }
+          />
+)}
+          {/* ✅ Work force hisory */}
+          {currentPage ===
+            "workHistory" && (
+            <WorkRecordHistory
+              token={token}
+              role={role}
             />
           )}
           {/* ✅ AdminPanel */}

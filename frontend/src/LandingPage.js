@@ -45,7 +45,20 @@ function LandingPage({ token, setCurrentPage }) {
           <p>View and manage all tasks</p>
         </div>
 
-        {/* Card 2: Recent Activities (Admins only) */}
+        {/* Card 2: Work force mangement */}
+        <div
+          className="card"
+          onClick={() =>
+            setCurrentPage("workforceManagement")
+          }
+        >
+          <h2>👷 Workforce Management</h2>
+          <p>
+            Tasks, workforce logs,
+            history and reports
+          </p>
+        </div>
+        {/* Card 3: Recent Activities (Admins only) */}
         {role === "Admin" && (
           <div className="card">
             <h2>🕒 Recent Activities (All Users)</h2>
