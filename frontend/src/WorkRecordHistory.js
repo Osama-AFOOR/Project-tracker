@@ -51,7 +51,7 @@ export default function WorkRecordHistory({
 
         const data =
           await res.json();
-
+          console.log("WORK RECORDS:", data);
         setRecords(
           Array.isArray(data)
             ? data
@@ -59,10 +59,11 @@ export default function WorkRecordHistory({
         );
 
       } catch (err) {
-
-        console.error(err);
-
-      } finally {
+  console.error(
+    "History load error:",
+    err
+  );
+} finally {
 
         setLoading(false);
 
@@ -373,7 +374,8 @@ export default function WorkRecordHistory({
             Loading...
           </p>
         ) : (
-          filteredRecords.map(
+          Array.isArray(filteredRecords) &&
+            filteredRecords.map(
             record => (
               <div
                 key={
