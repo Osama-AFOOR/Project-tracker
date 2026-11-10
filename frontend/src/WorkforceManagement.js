@@ -213,10 +213,11 @@ export default function WorkforceManagement({
   const statCard = {
     background: "#fff",
     borderRadius: "12px",
-    padding: "20px",
+    padding: "12px",
     boxShadow:
-      "0 3px 10px rgba(0,0,0,.08)",
-    textAlign: "center"
+      "0 2px 8px rgba(0,0,0,.08)",
+    textAlign: "center",
+    minHeight: "100px"
   };
 
   return (
@@ -358,29 +359,14 @@ export default function WorkforceManagement({
               gridTemplateColumns:
                 "repeat(auto-fit,minmax(280px,1fr))",
 
-              gap: "20px",
+              gap: "30px",
 
-              marginTop: "20px"
+              marginTop: "20px",
+
+              alignItems: "stretch"
             }}
           >
-            <div
-              className="card"
-              onClick={() =>
-                setCurrentPage(
-                  "addTask"
-                )
-              }
-            >
-              <h2>
-                ➕ Add New Task
-              </h2>
-
-              <p>
-                Create project
-                tasks
-              </p>
-            </div>
-
+          
             <div
               className="card"
               onClick={() =>
