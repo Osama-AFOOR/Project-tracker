@@ -795,25 +795,57 @@ const exportToPDF = async () => {
             <button onClick={() => { setCurrentPage("landing"); setSelectedTaskId(null); }}>
               Home
             </button>
-            <button onClick={() => { setCurrentPage("dashboard"); setSelectedTaskId(null); }}>
-              Dashboard
-            </button>
-            {(role === "Admin" || role === "Editor") && (
-              <button onClick={() => { setCurrentPage("addTask"); setSelectedTaskId(null); }}>
-                Add Task
-              </button>
-            )}
+            <div className="dropdown">
+  <button className="dropdown-btn">
+    Dashboard ▾
+  </button>
 
-            {(role === "Admin" || role === "Editor") && (
-              <button
-                onClick={() => {
-                  setCurrentPage("workforce");
-                  setSelectedTaskId(null);
-                }}
-              >
-                Workforce
-              </button>
-            )}
+  <div className="dropdown-content">
+    <button
+      onClick={() => {
+        setCurrentPage("dashboard");
+        setSelectedTaskId(null);
+      }}
+    >
+      Dashboard
+    </button>
+
+    <button
+      onClick={() => {
+        setCurrentPage("addTask");
+        setSelectedTaskId(null);
+      }}
+    >
+      Add Task
+    </button>
+  </div>
+</div>
+
+<div className="dropdown">
+  <button className="dropdown-btn">
+    Workforce ▾
+  </button>
+
+  <div className="dropdown-content">
+    <button
+      onClick={() => {
+        setCurrentPage(
+          "workforceManagement"
+        );
+      }}
+    >
+      Workforce Management
+    </button>
+
+    <button
+      onClick={() => {
+        setCurrentPage("workforce");
+      }}
+    >
+      New Work Log
+    </button>
+  </div>
+</div>
             
             {role === "Admin" && (
               <button onClick={() => setCurrentPage("adminPanel")}>
