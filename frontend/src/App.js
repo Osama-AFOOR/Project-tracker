@@ -1015,6 +1015,7 @@ const exportToPDF = async () => {
            {/* ✅ Workforce managment */}
             {currentPage === "workforceManagement" && (
           <WorkforceManagement
+          token={token}
             setCurrentPage={
               setCurrentPage
             }
