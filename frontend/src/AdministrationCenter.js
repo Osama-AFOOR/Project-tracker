@@ -10,7 +10,8 @@ export default function AdministrationCenter({ token }) {
   const [tasks, setTasks] = useState([]);
   const [comments, setComments] = useState([]);
   const [resources, setResources] = useState([]);
-
+  const [owners, setOwners] = useState([]);
+  const [newOwner, setNewOwner] = useState("");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("users");
 
@@ -33,7 +34,8 @@ export default function AdministrationCenter({ token }) {
         usersRes,
         tasksRes,
         commentsRes,
-        resourcesRes
+        resourcesRes,
+        ownersRes
       ] = await Promise.all([
         fetch(`${API_BASE}/admin/users`, {
           headers: { Authorization: token }
@@ -46,13 +48,17 @@ export default function AdministrationCenter({ token }) {
         }),
         fetch(`${API_BASE}/resources`, {
           headers: { Authorization: token }
+        }),
+        fetch(`${API_BASE}/owners`, {
+          headers: { Authorization: token }
         })
-      ]);
+ ]);
 
       setUsers(await usersRes.json());
       setTasks(await tasksRes.json());
       setComments(await commentsRes.json());
       setResources(await resourcesRes.json());
+      setOwners(await ownersRes.json());
 
     } catch (error) {
       console.error(error);
@@ -359,7 +365,76 @@ export default function AdministrationCenter({ token }) {
         console.error(err);
       }
     };
+const addOwner =
+  async () => {
 
+    if (!newOwner.trim())
+      return;
+
+    try {
+
+      await fetch(
+        `${API_BASE}/owners`,
+        {
+          method: "POST",
+
+          headers: {
+            Authorization: token,
+
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            name: newOwner
+          })
+        }
+      );
+
+      setNewOwner("");
+
+      loadData();
+
+    } catch (err) {
+
+      console.error(err);
+
+    }
+
+  };
+
+const deleteOwner =
+  async id => {
+
+    if (
+      !window.confirm(
+        "Delete Owner?"
+      )
+    )
+      return;
+
+    try {
+
+      await fetch(
+        `${API_BASE}/owners/${id}`,
+        {
+          method: "DELETE",
+
+          headers: {
+            Authorization: token
+          }
+        }
+      );
+
+      loadData();
+
+    } catch (err) {
+
+      console.error(err);
+
+    }
+
+  };
   if (loading)
     return (
       <p>
@@ -398,6 +473,10 @@ export default function AdministrationCenter({ token }) {
         <div className="stat-card">
           <h3>👷 Resources</h3>
           <p>{resources.length}</p>
+        </div>
+        <div className="stat-card">
+          <h3>🏢 Owners</h3>
+          <p>{owners.length}</p>
         </div>
 
         <div className="stat-card">
@@ -448,6 +527,18 @@ export default function AdministrationCenter({ token }) {
           }
         >
           Resources
+        </button>
+        <button
+          className={
+            activeTab === "owners"
+              ? "active-tab"
+              : ""
+          }
+          onClick={() =>
+            setActiveTab("owners")
+          }
+        >
+          Owners
         </button>
 
         <button
@@ -676,7 +767,78 @@ export default function AdministrationCenter({ token }) {
       {activeTab === "resources" && (
         <ResourceManagement token={token} />
       )}
+{activeTab === "owners" && (
 
+  <div className="admin-section">
+
+    <h3>
+      🏢 Owner Management
+    </h3>
+
+    <div
+      style={{
+        display: "flex",
+        gap: "10px",
+        marginBottom: "20px"
+      }}
+    >
+      <input
+        placeholder="Owner Name"
+        value={newOwner}
+        onChange={e =>
+          setNewOwner(
+            e.target.value
+          )
+        }
+      />
+
+      <button
+        onClick={addOwner}
+      >
+        Add Owner
+      </button>
+    </div>
+
+    <table className="admin-table">
+
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        {owners.map(owner => (
+          <tr key={owner._id}>
+
+            <td>
+              {owner.name}
+            </td>
+
+            <td>
+              <button
+                onClick={() =>
+                  deleteOwner(
+                    owner._id
+                  )
+                }
+              >
+                Delete
+              </button>
+            </td>
+
+          </tr>
+        ))}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+)}
       {/* TASKS */}
 
       {activeTab === "tasks" && (

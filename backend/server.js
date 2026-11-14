@@ -15,6 +15,7 @@ const Task = require("./models/Task");
 const Resource = require("./models/Resource");
 const WorkRecord = require("./models/WorkRecord");
 const UserActivity = require("./models/UserActivity");
+const Owner = require("./models/Owner");
 
 // ✅ Configure Cloudinary
 cloudinary.config({
@@ -547,7 +548,147 @@ app.delete("/resources/:id",
     }
   }
 );
+// --------------------
+// Owner Management
+// --------------------
 
+// Get Owners
+
+app.get(
+  "/owners",
+  auth,
+  async (req, res) => {
+    try {
+
+      const owners =
+        await Owner.find()
+          .sort({
+            name: 1
+          });
+
+      res.json(owners);
+
+    } catch (err) {
+
+      res.status(500).json({
+        error:
+          "Failed to fetch owners",
+        details:
+          err.message
+      });
+
+    }
+  }
+);
+
+// Create Owner
+
+app.post(
+  "/owners",
+  auth,
+  authorizeRoles(
+    "Admin"
+  ),
+  async (req, res) => {
+
+    try {
+
+      const owner =
+        new Owner({
+          name:
+            req.body.name
+        });
+
+      await owner.save();
+
+      res
+        .status(201)
+        .json(owner);
+
+    } catch (err) {
+
+      res.status(500).json({
+        error:
+          "Failed to create owner",
+        details:
+          err.message
+      });
+
+    }
+  }
+);
+
+// Update Owner
+
+app.put(
+  "/owners/:id",
+  auth,
+  authorizeRoles(
+    "Admin"
+  ),
+  async (req, res) => {
+
+    try {
+
+      const owner =
+        await Owner.findByIdAndUpdate(
+          req.params.id,
+          req.body,
+          {
+            new: true
+          }
+        );
+
+      res.json(owner);
+
+    } catch (err) {
+
+      res.status(500).json({
+        error:
+          "Failed to update owner",
+        details:
+          err.message
+      });
+
+    }
+
+  }
+);
+
+// Delete Owner
+
+app.delete(
+  "/owners/:id",
+  auth,
+  authorizeRoles(
+    "Admin"
+  ),
+  async (req, res) => {
+
+    try {
+
+      await Owner.findByIdAndDelete(
+        req.params.id
+      );
+
+      res.json({
+        message:
+          "Owner deleted"
+      });
+
+    } catch (err) {
+
+      res.status(500).json({
+        error:
+          "Failed to delete owner",
+        details:
+          err.message
+      });
+
+    }
+
+  }
+);
 // --------------------
 // Work Records
 // --------------------
