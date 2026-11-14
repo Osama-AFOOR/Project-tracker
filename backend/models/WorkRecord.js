@@ -67,12 +67,8 @@ const workRecordSchema =
 
       owner: {
         type: String,
-        default: "Owner 1",
-        enum: [
-          "Owner 1",
-          "Owner 2",
-          "Owner 3"
-        ]
+        required: true,
+        trim: true
       },
 
       building: {
