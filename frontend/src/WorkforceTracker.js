@@ -4,12 +4,6 @@ const API_BASE =
   process.env.REACT_APP_API_URL ||
   "http://localhost:5000";
 
-const OWNERS = [
-  "Owner 1",
-  "Owner 2",
-  "Owner 3"
-];
-
 const STATUS_OPTIONS = [
   "Ongoing",
   "Completed",
@@ -19,6 +13,7 @@ const STATUS_OPTIONS = [
 
 export default function WorkforceTracker({ token }) {
   const [resources, setResources] = useState([]);
+  const [owners, setOwners] = useState([]);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -28,7 +23,7 @@ export default function WorkforceTracker({ token }) {
       .toISOString()
       .split("T")[0],
 
-    owner: "Owner 1",
+    owner: "",
 
     building: "",
     area: "",
@@ -56,6 +51,7 @@ export default function WorkforceTracker({ token }) {
 
   useEffect(() => {
     loadResources();
+    loadOwners();
   }, []);
 
   const loadResources = async () => {
@@ -80,6 +76,38 @@ export default function WorkforceTracker({ token }) {
       console.error(err);
     }
   };
+
+  const loadOwners = async () => {
+
+  try {
+
+    const res =
+      await fetch(
+        `${API_BASE}/owners`,
+        {
+          headers: {
+            Authorization:
+              token
+          }
+        }
+      );
+
+    const data =
+      await res.json();
+
+    setOwners(
+      Array.isArray(data)
+        ? data
+        : []
+    );
+
+  } catch (err) {
+
+    console.error(err);
+
+  }
+
+};
 
   const toggleResource = resourceId => {
     setRecord(prev => {
@@ -306,7 +334,7 @@ export default function WorkforceTracker({ token }) {
           .toISOString()
           .split("T")[0],
 
-        owner: "Owner 1",
+        owner: "",
 
         building: "",
         area: "",
@@ -405,12 +433,16 @@ export default function WorkforceTracker({ token }) {
               })
             }
           >
-            {OWNERS.map(owner => (
+            <option value="">
+              Select Owner
+            </option>
+
+            {owners.map(owner => (
               <option
-                key={owner}
-                value={owner}
+                key={owner._id}
+                value={owner.name}
               >
-                {owner}
+                {owner.name}
               </option>
             ))}
           </select>
