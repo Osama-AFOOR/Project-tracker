@@ -38,6 +38,7 @@ export default function WorkforceTracker({ token }) {
     activities: [
       {
         fromTime: "",
+        duration: 1,
         toTime: "",
         activity: "",
         discipline: "",
@@ -140,6 +141,7 @@ export default function WorkforceTracker({ token }) {
         ...prev.activities,
         {
           fromTime: "",
+          duration: 1,
           toTime: "",
           activity: "",
           discipline: "",
@@ -172,25 +174,75 @@ export default function WorkforceTracker({ token }) {
       activities: updated
     });
   };
-
-  const updateActivity = (
-    index,
-    field,
-    value
+  const calculateEndTime = (
+    startTime,
+    duration
   ) => {
 
-    const updated = [
-      ...record.activities
-    ];
+    if (!startTime)
+      return "";
 
-    updated[index][field] =
-      value;
+    const [
+      hours,
+      minutes
+    ] = startTime
+      .split(":")
+      .map(Number);
 
-    setRecord({
-      ...record,
-      activities: updated
-    });
+    const start =
+      new Date();
+
+    start.setHours(
+      hours,
+      minutes,
+      0,
+      0
+    );
+
+    start.setMinutes(
+      start.getMinutes() +
+        Number(duration || 0) *
+          60
+    );
+
+    return `${String(
+      start.getHours()
+    ).padStart(2, "0")}:${String(
+      start.getMinutes()
+    ).padStart(2, "0")}`;
   };
+  const updateActivity = (
+  index,
+  field,
+  value
+) => {
+
+  const updated = [
+    ...record.activities
+  ];
+
+  updated[index][field] =
+    value;
+
+  if (
+    field === "fromTime" ||
+    field === "duration"
+  ) {
+
+    updated[index].toTime =
+      calculateEndTime(
+        updated[index].fromTime,
+        updated[index].duration
+      );
+
+  }
+
+  setRecord({
+    ...record,
+    activities: updated
+  });
+
+};
       
   const toggleActivityResource = (
   activityIndex,
@@ -349,6 +401,7 @@ export default function WorkforceTracker({ token }) {
         activities: [
           {
             fromTime: "",
+            duration: 1,
             toTime: "",
             activity: "",
             discipline: "",
@@ -604,20 +657,31 @@ export default function WorkforceTracker({ token }) {
                     )
                   }
                 />
-
                 <input
-                  type="time"
-                  value={
-                    activity.toTime || ""
-                  }
-                  onChange={e =>
-                    updateActivity(
-                      index,
-                      "toTime",
-                      e.target.value
-                    )
-                  }
-                />
+                    type="number"
+                    min="0.5"
+                    step="0.5"
+                    placeholder="Duration (hrs)"
+                    value={
+                      activity.duration || 1
+                    }
+                    onChange={e =>
+                      updateActivity(
+                        index,
+                        "duration",
+                        Number(
+                          e.target.value
+                        )
+                      )
+                    }
+                  />
+                  <input
+                    value={
+                      activity.toTime || ""
+                    }
+                    readOnly
+                    placeholder="End Time"
+                  />
 
                   <input
                     placeholder="Activity"
