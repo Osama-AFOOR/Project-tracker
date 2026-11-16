@@ -11,7 +11,7 @@ const STATUS_OPTIONS = [
 ];
 
 
-export default function WorkforceTracker({ token }) {
+export default function WorkforceTracker({ token, editRecord }) {
   const [resources, setResources] = useState([]);
   const [owners, setOwners] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -54,7 +54,20 @@ export default function WorkforceTracker({ token }) {
     loadResources();
     loadOwners();
   }, []);
+useEffect(() => {
 
+  if (!editRecord)
+    return;
+
+  setEditingId(
+    editRecord._id
+  );
+
+  setRecord({
+    ...editRecord
+  });
+
+}, [editRecord]);
   const loadResources = async () => {
     try {
       const res = await fetch(

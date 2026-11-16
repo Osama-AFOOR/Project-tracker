@@ -35,7 +35,8 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [currentPage, setCurrentPage] = useState("landing");
   const [selectedTaskId, setSelectedTaskId] = useState(null);
-
+  const [editingWorkRecord, setEditingWorkRecord] =
+  useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -1042,6 +1043,7 @@ const exportToPDF = async () => {
           {currentPage === "workforce" && (
             <WorkforceTracker
               token={token}
+              editRecord={editingWorkRecord}
             />
           )}
            {/* ✅ Workforce managment */}
@@ -1054,13 +1056,24 @@ const exportToPDF = async () => {
           />
 )}
           {/* ✅ Work force hisory */}
-          {currentPage ===
-            "workHistory" && (
-            <WorkRecordHistory
-              token={token}
-              role={role}
-            />
-          )}
+            {currentPage ===
+              "workHistory" && (
+              <WorkRecordHistory
+                token={token}
+                role={role}
+                onEditRecord={record => {
+
+                  setEditingWorkRecord(
+                    record
+                  );
+
+                  setCurrentPage(
+                    "workforce"
+                  );
+
+                }}
+              />
+            )}
           {/* ✅ AdminPanel */}
           {currentPage === "adminPanel" && role === "Admin" && (
             <AdministrationCenter token={token} />
