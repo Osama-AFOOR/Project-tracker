@@ -697,8 +697,7 @@ export default function WorkforceTracker({ token }) {
                     }
                   />
 
-                  <input
-                    placeholder="Discipline"
+                  <select
                     value={
                       activity.discipline
                     }
@@ -709,7 +708,24 @@ export default function WorkforceTracker({ token }) {
                         e.target.value
                       )
                     }
-                  />
+                  >
+                    <option value="">
+                      Select Discipline
+                    </option>
+
+                    <option value="Electrical">
+                      Electrical
+                    </option>
+
+                    <option value="Mechanical">
+                      Mechanical
+                    </option>
+
+                    <option value="Other">
+                      Other
+                    </option>
+                  </select>
+
 
                   <input
                     type="number"
