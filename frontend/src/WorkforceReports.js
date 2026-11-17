@@ -27,7 +27,22 @@ export default function WorkforceReports({
         .toISOString()
         .split("T")[0]
     );
+const [reportType, setReportType] =
+  useState("daily");
 
+const [fromDate, setFromDate] =
+  useState(
+    new Date()
+      .toISOString()
+      .split("T")[0]
+  );
+
+const [toDate, setToDate] =
+  useState(
+    new Date()
+      .toISOString()
+      .split("T")[0]
+  );
   const [
     selectedResource,
     setSelectedResource
@@ -92,7 +107,7 @@ export default function WorkforceReports({
       return null;
 
     const rows = [];
-
+    const groupedDays = {};
     records.forEach(record => {
 
       const recordDate =
@@ -104,10 +119,16 @@ export default function WorkforceReports({
               .split("T")[0]
           : "";
 
-      if (
-        recordDate !==
-        selectedDate
-      )
+      const inRange =
+        reportType === "daily"
+            ? recordDate ===
+            selectedDate
+            : (
+                recordDate >= fromDate &&
+                recordDate <= toDate
+            );
+
+        if (!inRange)
         return;
 
       (
@@ -127,28 +148,42 @@ export default function WorkforceReports({
         if (!assigned)
           return;
 
-        rows.push({
-          time:
-            `${activity.fromTime || ""} - ${activity.toTime || ""}`,
+      const row = {
+  date: recordDate,
 
-          activity:
-            activity.activity,
+  time:
+    `${activity.fromTime || ""}
+    - 
+    ${activity.toTime || ""}`,
 
-          progress:
-            activity.progress,
+  activity:
+    activity.activity,
 
-          discipline:
-            activity.discipline,
+  progress:
+    activity.progress,
 
-          owner:
-            record.owner,
+  discipline:
+    activity.discipline,
 
-          status:
-            activity.status,
+  owner:
+    record.owner,
 
-          comments:
-            activity.comments
-        });
+  status:
+    activity.status,
+
+  comments:
+    activity.comments
+};
+
+rows.push(row);
+
+if (!groupedDays[recordDate]) {
+  groupedDays[recordDate] = [];
+}
+
+groupedDays[recordDate].push(
+  row
+);
 
       });
 
@@ -175,13 +210,14 @@ export default function WorkforceReports({
           "Blocked"
       ).length;
 
-    return {
-      resource,
-      rows,
-      completed,
-      ongoing,
-      blocked
-    };
+        return {
+        resource,
+        rows,
+        groupedDays,
+        completed,
+        ongoing,
+        blocked
+        };
 
   }, [
     selectedDate,
@@ -425,21 +461,80 @@ const exportToPDF = () => {
         >
           <div>
             <label>
-              Date
+                Report Type
             </label>
 
-            <input
-              type="date"
-              value={
-                selectedDate
-              }
-              onChange={e =>
-                setSelectedDate(
-                  e.target.value
+            <select
+                value={reportType}
+                onChange={e =>
+                setReportType(
+                    e.target.value
                 )
-              }
-            />
-          </div>
+                }
+            >
+                <option value="daily">
+                Daily Report
+                </option>
+
+                <option value="period">
+                Period Report
+                </option>
+            </select>
+            </div>
+
+            {reportType === "daily" && (
+            <div>
+                <label>
+                Date
+                </label>
+
+                <input
+                type="date"
+                value={selectedDate}
+                onChange={e =>
+                    setSelectedDate(
+                    e.target.value
+                    )
+                }
+                />
+            </div>
+            )}
+
+            {reportType === "period" && (
+            <>
+                <div>
+                <label>
+                    From Date
+                </label>
+
+                <input
+                    type="date"
+                    value={fromDate}
+                    onChange={e =>
+                    setFromDate(
+                        e.target.value
+                    )
+                    }
+                />
+                </div>
+
+                <div>
+                <label>
+                    To Date
+                </label>
+
+                <input
+                    type="date"
+                    value={toDate}
+                    onChange={e =>
+                    setToDate(
+                        e.target.value
+                    )
+                    }
+                />
+                </div>
+            </>
+            )}
 
           <div>
             <label>
@@ -562,115 +657,98 @@ const exportToPDF = () => {
             </div>
           </div>
 
-          <table
-            className="admin-table"
-          >
-            <thead>
-              <tr>
-                <th>
-                  Time
-                </th>
+{Object.entries(
+  reportData.groupedDays
+).map(
+  ([date, activities]) => (
 
-                <th>
-                  Activity
-                </th>
+    <div
+      key={date}
+      style={{
+        marginBottom: "30px"
+      }}
+    >
+      <div
+        style={{
+          background: "#4F81BD",
+          color: "white",
+          padding: "10px",
+          fontWeight: "bold",
+          borderRadius: "6px 6px 0 0"
+        }}
+      >
+        {date}
+      </div>
 
-                <th>
-                  Progress
-                </th>
+      <table
+        className="admin-table"
+      >
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Activity</th>
+            <th>Progress</th>
+            <th>Discipline</th>
+            <th>Owner</th>
+            <th>Status</th>
+            <th>Comments</th>
+          </tr>
+        </thead>
 
-                <th>
-                  Discipline
-                </th>
+        <tbody>
 
-                <th>
-                  Owner
-                </th>
-
-                <th>
-                  Status
-                </th>
-
-                <th>
-                  Comments
-                </th>
+          {activities.map(
+            (
+              row,
+              index
+            ) => (
+              <tr key={index}>
+                <td>{row.time}</td>
+                <td>{row.activity}</td>
+                <td>
+                  {row.progress}%
+                </td>
+                <td>
+                  {row.discipline}
+                </td>
+                <td>
+                  {row.owner}
+                </td>
+                <td>
+                  {row.status}
+                </td>
+                <td>
+                  {row.comments}
+                </td>
               </tr>
-            </thead>
+            )
+          )}
 
-            <tbody>
-              {reportData.rows
-                .length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    style={{
-                      textAlign:
-                        "center"
-                    }}
-                  >
-                    No activities
-                    found
-                  </td>
-                </tr>
-              ) : (
-                reportData.rows.map(
-                  (
-                    row,
-                    index
-                  ) => (
-                    <tr
-                      key={
-                        index
-                      }
-                    >
-                      <td>
-                        {
-                          row.time
-                        }
-                      </td>
+        </tbody>
+      </table>
 
-                      <td>
-                        {
-                          row.activity
-                        }
-                      </td>
+      <div
+        style={{
+          background:
+            "#f5f7fa",
+          padding: "10px",
+          border:
+            "1px solid #ddd",
+          borderTop: "none",
+          borderRadius:
+            "0 0 6px 6px"
+        }}
+      >
+        <strong>
+          Daily Activities:
+        </strong>
+        {" "}
+        {activities.length}
+      </div>
+    </div>
 
-                      <td>
-                        {
-                          row.progress
-                        }
-                        %
-                      </td>
-
-                      <td>
-                        {
-                          row.discipline
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          row.owner
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          row.status
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          row.comments
-                        }
-                      </td>
-                    </tr>
-                  )
-                )
-              )}
-            </tbody>
-          </table>
+  )
+)}
 
           <div
             style={{
