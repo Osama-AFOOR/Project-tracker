@@ -744,7 +744,8 @@ const toggleActivityResource = (
                     </option>
                   </select>
 
-
+                <div>
+                  <label>Progress (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -763,7 +764,7 @@ const toggleActivityResource = (
                       )
                     }
                   />
-
+</div>
                   <select
                     value={
                       activity.status
