@@ -3,7 +3,11 @@ import React, {
   useMemo,
   useState
 } from "react";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 const API_URL =
   process.env.REACT_APP_API_URL ||
   "http://localhost:5000";
@@ -185,7 +189,193 @@ export default function WorkforceReports({
     records,
     resources
   ]);
+const exportToExcel = async () => {
 
+  if (!reportData) return;
+
+  const workbook =
+    new ExcelJS.Workbook();
+
+  const sheet =
+    workbook.addWorksheet(
+      "Daily Activity Tracker"
+    );
+
+  sheet.mergeCells("A1:G1");
+
+  sheet.getCell("A1").value =
+    "DAILY ENGINEERING ACTIVITY TRACKER";
+
+  sheet.getCell("A1").font = {
+    size: 16,
+    bold: true
+  };
+
+  sheet.getCell("A1").alignment = {
+    horizontal: "center"
+  };
+
+  sheet.addRow([]);
+
+  sheet.addRow([
+    "Date",
+    selectedDate,
+    "Resource",
+    reportData.resource.name
+  ]);
+
+  sheet.addRow([
+    "Trade",
+    reportData.resource.trade,
+    "Company",
+    reportData.resource.company
+  ]);
+
+  sheet.addRow([
+    "Level",
+    reportData.resource.level
+  ]);
+
+  sheet.addRow([]);
+
+  const header =
+    sheet.addRow([
+      "Time Slot",
+      "Activity",
+      "Progress %",
+      "Discipline",
+      "Owner",
+      "Status",
+      "Comments"
+    ]);
+
+  header.font = {
+    bold: true,
+    color: {
+      argb: "FFFFFFFF"
+    }
+  };
+
+  header.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: {
+      argb: "4F81BD"
+    }
+  };
+
+  reportData.rows.forEach(
+    row => {
+
+      sheet.addRow([
+        row.time,
+        row.activity,
+        row.progress,
+        row.discipline,
+        row.owner,
+        row.status,
+        row.comments
+      ]);
+
+    }
+  );
+
+  sheet.columns.forEach(
+    column => {
+      column.width = 25;
+    }
+  );
+
+  const buffer =
+    await workbook.xlsx.writeBuffer();
+
+  saveAs(
+    new Blob([buffer]),
+    `DailyTracker_${reportData.resource.name}_${selectedDate}.xlsx`
+  );
+
+};
+const exportToPDF = () => {
+
+  if (!reportData) return;
+
+  const doc =
+    new jsPDF(
+      "landscape"
+    );
+
+  doc.setFontSize(16);
+
+  doc.text(
+    "DAILY ENGINEERING ACTIVITY TRACKER",
+    14,
+    15
+  );
+
+  doc.setFontSize(10);
+
+  doc.text(
+    `Date: ${selectedDate}`,
+    14,
+    25
+  );
+
+  doc.text(
+    `Resource: ${reportData.resource.name}`,
+    70,
+    25
+  );
+
+  doc.text(
+    `Trade: ${reportData.resource.trade}`,
+    14,
+    32
+  );
+
+  doc.text(
+    `Company: ${reportData.resource.company}`,
+    70,
+    32
+  );
+
+  doc.text(
+    `Level: ${reportData.resource.level}`,
+    150,
+    32
+  );
+
+  autoTable(doc, {
+    startY: 40,
+
+    head: [[
+      "Time",
+      "Activity",
+      "Progress",
+      "Discipline",
+      "Owner",
+      "Status",
+      "Comments"
+    ]],
+
+    body:
+      reportData.rows.map(
+        row => [
+          row.time,
+          row.activity,
+          `${row.progress}%`,
+          row.discipline,
+          row.owner,
+          row.status,
+          row.comments
+        ]
+      )
+  });
+
+  doc.save(
+    `DailyTracker_${reportData.resource.name}_${selectedDate}.pdf`
+  );
+
+};
   return (
     <div
       style={{
@@ -209,7 +399,22 @@ export default function WorkforceReports({
         <h3>
           Daily Engineering Activity Tracker
         </h3>
+        <div
+        style={{
+            display: "flex",
+            gap: "10px",
+            justifyContent: "center",
+            marginBottom: "20px"
+        }}
+        >
+        <button onClick={exportToExcel}>
+            📊 Export Excel
+        </button>
 
+        <button onClick={exportToPDF}>
+            📄 Export PDF
+        </button>
+        </div>
         <div
           style={{
             display: "grid",
