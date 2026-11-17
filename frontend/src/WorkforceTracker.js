@@ -257,7 +257,7 @@ useEffect(() => {
 
 };
       
-  const toggleActivityResource = (
+const toggleActivityResource = (
   activityIndex,
   resourceId
 ) => {
@@ -271,19 +271,24 @@ useEffect(() => {
       .resources || [];
 
   const exists =
-    resources.includes(
-      resourceId
+    resources.some(
+      r =>
+        (r._id || r) ===
+        resourceId
     );
 
-  updated[activityIndex]
-    .resources = exists
-      ? resources.filter(
-          r => r !== resourceId
-        )
-      : [
-          ...resources,
+  updated[
+    activityIndex
+  ].resources = exists
+    ? resources.filter(
+        r =>
+          (r._id || r) !==
           resourceId
-        ];
+      )
+    : [
+        ...resources,
+        resourceId
+      ];
 
   setRecord({
     ...record,
@@ -839,11 +844,12 @@ useEffect(() => {
                           cursor: "pointer",
 
                           border:
-                            (
-                              activity.resources || []
-                            ).includes(
-                              resource._id
-                            )
+                            (activity.resources || [])
+                              .some(
+                                r =>
+                                  (r._id || r) ===
+                                  resource._id
+                              )
                               ? "2px solid #1976d2"
                               : "1px solid #ddd",
 
