@@ -24,7 +24,7 @@ import './App.css';
 import WorkforceManagement from "./WorkforceManagement";
 
 import WorkRecordHistory from "./WorkRecordHistory";
-
+import WorkforceReports from "./WorkforceReports";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
@@ -1072,6 +1072,14 @@ const exportToPDF = async () => {
                   );
 
                 }}
+              />
+            )}
+
+          {/* ✅ Work force Report */}
+            {currentPage ===
+              "workforceReports" && (
+              <WorkforceReports
+                token={token}
               />
             )}
           {/* ✅ AdminPanel */}

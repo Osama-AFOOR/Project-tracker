@@ -402,6 +402,18 @@ export default function WorkforceManagement({
                 records
               </p>
             </div>
+            <div
+              className="card"
+              onClick={() =>
+                setCurrentPage("workforceReports")
+              }
+            >
+              <h2>📊 Workforce Reports</h2>
+
+              <p>
+                Daily activity tracker and resource reports
+              </p>
+            </div>
           </div>
         </>
       )}
